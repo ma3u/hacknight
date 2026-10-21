@@ -238,6 +238,10 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
 @media (max-width: 900px) { .lineup { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 760px) { .records, .arena, .lineup { grid-template-columns: 1fr; } }
 
+/* wide screens: the longship sails in the free gutter left of the quiz instead of behind it */
+@media (min-width: 1400px) {
+  .ship { left: calc((100vw - 1080px) / 4); width: min(340px, calc((100vw - 1080px) / 2 - 24px)); bottom: 15%; }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

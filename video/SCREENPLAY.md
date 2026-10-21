@@ -1,6 +1,9 @@
 # Drehbuch · Vinland Pub Quiz (LinkedIn, 75 s, 1080×1350)
 
-Aufnahme: `uv run --with playwright python video/record_video.py` → `video/out/vinland-quiz-linkedin.mp4`.
+Aufnahme:
+- LinkedIn-Feed (4:5, 1080×1350): `uv run --with playwright python video/record_video.py` → `video/out/vinland-quiz-linkedin.mp4`
+- Desktop (16:9, 1920×1080, Animation rund um das Quiz sichtbar): `uv run --with playwright python video/record_video.py desktop`
+  → `video/out/vinland-quiz-desktop.mp4`
 Gespielt wird die Online-Version (Replay) in Google Chrome; die acht KI-Modelle antworten mit ihren echten,
 aufgezeichneten Eval-Antworten. **Den Menschen spielt Claude Opus 5.5**: Die fünf Antworten hat Opus 5.5 vor der
 Aufnahme selbst gewählt; das Skript tippt sie nach 2–3,5 s „Bedenkzeit“ ein. Ton: ElevenLabs-Musik, -Effekte und

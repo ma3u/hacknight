@@ -1,12 +1,13 @@
 """Record the LinkedIn video of the Vinland pub quiz: uv run --with playwright python video/record_video.py
 
 A scripted screen recording (the screenplay is SCENES below) of the static quiz build in Google Chrome,
-captured with the DevTools screencast at 1.5x pixel density (crisp 1080x1350 frames from a 720x900 layout):
+captured with the DevTools screencast at high pixel density (crisp frames at the output size):
 the human player is simulated with answers Claude Opus 5.5 chose for these questions before recording,
 the eight AI models replay their recorded eval answers. Browser video has no audio, so every sound the page
 plays is logged with its timestamp and the same ElevenLabs files are mixed onto the video with ffmpeg.
 
-Output: video/out/vinland-quiz-linkedin.mp4 (1080x1350, 4:5 for the LinkedIn feed).
+Output: video/out/vinland-quiz-linkedin.mp4 (1080x1350, 4:5 for the LinkedIn feed), or with the argument
+`desktop` video/out/vinland-quiz-desktop.mp4 (1920x1080, 16:9, with the animated Viking scene around the quiz).
 """
 
 import asyncio
@@ -17,6 +18,7 @@ import json
 import random
 import shutil
 import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
@@ -26,8 +28,13 @@ from playwright.async_api import async_playwright
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
 OUT = Path(__file__).resolve().parent / "out"
-VIEWPORT = {"width": 720, "height": 900}  # rendered at 1.5x: same 1080x1350 file, 50 % larger, crisp text for phones
-SIZE = {"width": 1080, "height": 1350}
+# Layout size, pixel density and output size per format. `python video/record_video.py desktop`
+FORMATS = {
+    "linkedin": ({"width": 720, "height": 900}, 1.5, {"width": 1080, "height": 1350}),  # 4:5 feed, large text for phones
+    "desktop": ({"width": 1600, "height": 900}, 1.2, {"width": 1920, "height": 1080}),  # 16:9, Viking scene around the quiz
+}
+FORMAT = sys.argv[1] if len(sys.argv) > 1 else "linkedin"
+VIEWPORT, SCALE, SIZE = FORMATS[FORMAT]
 PORT = 8767
 ROUND = "4,30,129,37,249"
 HUMAN = "Opus 5.5"
@@ -95,19 +102,20 @@ def serve() -> http.server.ThreadingHTTPServer:
 
 async def record() -> tuple[Path, list, float, float]:
     """Drive Chrome through the screenplay and capture it with the DevTools screencast at full pixel density."""
-    shutil.rmtree(OUT / "frames", ignore_errors=True)
-    (OUT / "frames").mkdir(parents=True)
+    frames_dir = OUT / f"frames_{FORMAT}"  # one folder per format: two recordings never share frames
+    shutil.rmtree(frames_dir, ignore_errors=True)
+    frames_dir.mkdir(parents=True, exist_ok=True)
     server = serve()
     frames: list[tuple[float, Path]] = []
     async with async_playwright() as p:
         browser = await p.chromium.launch(channel="chrome", args=["--autoplay-policy=no-user-gesture-required"])
-        context = await browser.new_context(viewport=VIEWPORT, device_scale_factor=1.5)
+        context = await browser.new_context(viewport=VIEWPORT, device_scale_factor=SCALE)
         await context.add_init_script(SOUND_LOG)
         page = await context.new_page()
         cdp = await context.new_cdp_session(page)
 
         async def on_frame(params):
-            path = OUT / "frames" / f"{len(frames):06d}.jpg"
+            path = frames_dir / f"{len(frames):06d}.jpg"
             path.write_bytes(base64.b64decode(params["data"]))
             frames.append((params["metadata"]["timestamp"], path))
             await cdp.send("Page.screencastFrameAck", {"sessionId": params["sessionId"]})
@@ -164,13 +172,13 @@ async def record() -> tuple[Path, list, float, float]:
     # Variable-rate screencast frames -> constant 30 fps video, timed by the frames' own timestamps.
     frames.sort()
     t0 = frames[0][0]
-    concat = OUT / "frames.txt"
+    concat = OUT / f"frames_{FORMAT}.txt"
     lines = ["ffconcat version 1.0"]
     for (ts, path), nxt in zip(frames, [f[0] for f in frames[1:]] + [end_ts]):
         lines += [f"file '{path}'", f"duration {max(nxt - ts, 0.001):.4f}"]
     lines.append(f"file '{frames[-1][1]}'")
     concat.write_text("\n".join(lines) + "\n")
-    video = OUT / "video_only.mp4"
+    video = OUT / f"video_only_{FORMAT}.mp4"
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(concat), "-vf",
                     f"fps=30,scale={SIZE['width']}:{SIZE['height']}:flags=lanczos", "-c:v", "libx264", "-preset", "slow",
                     "-crf", "18", "-pix_fmt", "yuv420p", str(video)], check=True)
@@ -179,7 +187,7 @@ async def record() -> tuple[Path, list, float, float]:
 
 def mix(video: Path, sounds: list, t0: float, duration: float) -> Path:
     """Put the logged sounds onto the video timeline; the music loops from its start to the end."""
-    out = OUT / "vinland-quiz-linkedin.mp4"
+    out = OUT / f"vinland-quiz-{FORMAT}.mp4"
     inputs, filters, labels = ["-i", str(video)], [], []
     for n, s in enumerate(s for s in sounds if s["src"].endswith(".mp3")):
         delay = max(0, int(s["t"] - t0))
@@ -195,7 +203,7 @@ def mix(video: Path, sounds: list, t0: float, duration: float) -> Path:
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *inputs, "-filter_complex", ";".join(filters),
                     "-map", "0:v", "-map", "[aout]", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", "-t", f"{duration / 1000:.2f}", str(out)],
                    check=True)
-    (OUT / "sound_log.json").write_text(json.dumps([dict(s, at_ms=int(s["t"] - t0)) for s in sounds], indent=1))
+    (OUT / f"sound_log_{FORMAT}.json").write_text(json.dumps([dict(s, at_ms=int(s["t"] - t0)) for s in sounds], indent=1))
     return out
 
 
