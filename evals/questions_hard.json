@@ -1,0 +1,22 @@
+[
+  ["How many times does the letter s appear in the word possessiveness?", ["5", "6", "7", "8"], "B"],
+  ["What is 47 * 89?", ["4,183", "4,083", "4,173", "4,193"], "A"],
+  ["What is 13% of 1,700?", ["201", "211", "221", "231"], "C"],
+  ["How many seconds are in a week?", ["86,400", "604,800", "640,800", "608,400"], "B"],
+  ["How many times does the letter i appear in the word indivisibility?", ["4", "5", "6", "7"], "C"],
+  ["Which country has the most time zones (including overseas territories)?", ["Russia", "United States", "France", "United Kingdom"], "C"],
+  ["What is the sum of the interior angles of a heptagon in degrees?", ["720", "900", "1,080", "1,260"], "B"],
+  ["Which is the smallest country in the world by area?", ["Monaco", "Vatican City", "San Marino", "Liechtenstein"], "B"],
+  ["What is 2,048 divided by 32?", ["62", "64", "66", "68"], "B"],
+  ["Which element has the highest melting point?", ["Iron", "Tungsten", "Carbon", "Titanium"], "B"],
+  ["If you buy 3 items at 4.75 each and pay with a 20 note, how much change do you get?", ["5.25", "5.75", "6.25", "4.75"], "B"],
+  ["How many prime numbers are there between 1 and 30?", ["8", "9", "10", "11"], "C"],
+  ["Who composed 'The Four Seasons'?", ["Bach", "Vivaldi", "Mozart", "Handel"], "B"],
+  ["What is the capital of New Zealand?", ["Auckland", "Christchurch", "Wellington", "Queenstown"], "C"],
+  ["How many times does the letter o appear in the word onomatopoeia?", ["2", "3", "4", "5"], "C"],
+  ["What year did the first iPhone go on sale?", ["2005", "2006", "2007", "2008"], "C"],
+  ["What is 123 * 456?", ["56,088", "55,088", "56,188", "54,088"], "A"],
+  ["A car uses 6 litres per 100 km. How many litres does it need for 350 km?", ["18", "20", "21", "24"], "C"],
+  ["Which is the only mammal capable of true sustained flight?", ["Flying squirrel", "Bat", "Sugar glider", "Colugo"], "B"],
+  ["How many weeks are in 3 non-leap years, rounded down?", ["155", "156", "157", "158"], "B"]
+]
