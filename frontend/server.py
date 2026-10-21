@@ -6,6 +6,7 @@ Serves frontend/index.html and puts each question to the agents in AGENTS:
 The key stays in this process; the browser never sees it. Standard library only.
 """
 
+import hashlib
 import json
 import os
 import random
@@ -13,6 +14,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import urllib.request
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -23,11 +25,19 @@ ROOT = HERE.parent
 sys.path.insert(0, str(ROOT))
 from check import format_question, last_reply, tokens_used  # noqa: E402
 
+import eleven  # noqa: E402  (frontend/eleven.py: ElevenLabs CLI or REST)
+
 PORT = int(os.environ.get("PORT", "8765"))
 WORKSPACE = os.environ.get("DEEPSET_WORKSPACE", "vinland")
 ENDPOINT = f"https://api.cloud.deepset.ai/api/v1/workspaces/{WORKSPACE}/deployments/v1/chat/completions"
 API_KEY = os.environ.get("DEEPSET_API_KEY", "")
 CLI = os.environ.get("HAYSTACK_ENTERPRISE_CLI", str(Path.home() / ".local/bin/haystack-enterprise"))
+KNUT_VOICE = os.environ.get("KNUT_VOICE", "JBFqnCBsd6RMkjVDRZzb")
+TTS_DIR = HERE / "sounds" / "tts"
+# The platform queues parallel sandbox runs: one run alone takes ~2-4 s, three at once ~6-14 s each.
+# So agents run one at a time by default, each timed from the start of its own run: the times compare
+# models, not queues. SANDBOX_PARALLEL=3 makes rounds faster but the times less fair.
+SANDBOX = threading.Semaphore(int(os.environ.get("SANDBOX_PARALLEL", "1")))
 
 SHORT_PROMPT = "Reply with only the correct option letter."
 REASONING = {"reasoning_effort": "low", "max_completion_tokens": 1000}
@@ -97,6 +107,15 @@ def ask_sandbox(agent: dict, text: str) -> dict:
     return {"reply": last_reply(result), "tokens": tokens_used(result)}
 
 
+def speak(text: str) -> str:
+    """Knut reads a question aloud with ElevenLabs, cached by text, so each question costs credits once."""
+    TTS_DIR.mkdir(parents=True, exist_ok=True)
+    path = TTS_DIR / (hashlib.sha1(f"{KNUT_VOICE}:{text}".encode()).hexdigest()[:16] + ".mp3")
+    if not path.exists():
+        eleven.speech(text, KNUT_VOICE, path)
+    return f"sounds/tts/{path.name}"
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(HERE), **kwargs)
@@ -114,18 +133,27 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
+        if self.path == "/api/sounds":  # which ElevenLabs files exist, so the page never requests missing ones
+            return self.send_json({"files": sorted(f.stem for f in (HERE / "sounds").glob("*.mp3"))})
         if self.path == "/api/questions":
             questions = load_questions()
             random.shuffle(questions)
             agents = {key: {k: a[k] for k in ("label", "model", "note")} | {"live": bool(API_KEY and a.get("service"))}
                       for key, a in AGENTS.items()}
-            return self.send_json({"questions": questions, "agents": agents})
+            return self.send_json({"questions": questions, "agents": agents, "tts": eleven.available()})
         return super().do_GET()
 
     def do_POST(self):
-        if self.path != "/api/ask":
+        if self.path not in ("/api/ask", "/api/tts"):
             return self.send_json({"error": "not found"}, 404)
         payload = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or "{}")
+        if self.path == "/api/tts":
+            if not eleven.available():
+                return self.send_json({"error": "no ElevenLabs CLI or ELEVEN_LABS_API_KEY"}, 503)
+            try:
+                return self.send_json({"url": speak(str(payload.get("text", ""))[:600])})
+            except Exception as error:  # no credits, not logged in, ...: the quiz just stays silent
+                return self.send_json({"error": str(error)[-300:]}, 502)
         agent = AGENTS.get(payload.get("agent", "gpt54"))
         if agent is None:
             return self.send_json({"error": "unknown agent"}, 400)
@@ -133,7 +161,12 @@ class Handler(SimpleHTTPRequestHandler):
         live = bool(API_KEY and agent.get("service"))
         start = time.monotonic()
         try:
-            answer = ask_live(agent["service"], text) if live else ask_sandbox(agent, text)
+            if live:
+                answer = ask_live(agent["service"], text)
+            else:
+                with SANDBOX:
+                    start = time.monotonic()
+                    answer = ask_sandbox(agent, text)
         except Exception as error:  # report any failure to the UI instead of hanging it
             return self.send_json({"error": str(error)[-400:], "seconds": time.monotonic() - start}, 502)
         reply = answer["reply"].strip()

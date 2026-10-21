@@ -14,7 +14,7 @@ package "Laptop · Repo ma3u/hacknight" {
   [evals/run_eval.py\n+ questions*.json] as Evals
   [frontend/server.py\n(Proxy, stdlib)] as Server
   [frontend/index.html\nDuell-UI + Sounds] as UI
-  [frontend/make_sounds.sh] as Sounds
+  [frontend/make_sounds.py\n+ eleven.py] as Sounds
   [haystack-enterprise CLI] as CLI
 }
 
@@ -45,7 +45,8 @@ Server --> CLI : Sandbox-Modus
 Server --> SvcQuiz : Live-Modus (DEEPSET_API_KEY)
 UI --> Server : /api/questions, /api/ask
 Team --> UI
-Sounds --> Eleven : text-to-sound-effects
+Sounds --> Eleven : Sound-Effekte, Musik, Stimmen
+Server --> Eleven : Knut liest Fragen vor (TTS)
 UI ..> Sounds : sounds/*.mp3
 
 Host --> SvcQuiz : Frage (OpenAI-kompatibel)

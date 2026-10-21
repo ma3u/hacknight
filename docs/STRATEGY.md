@@ -42,7 +42,7 @@ package "Laptop · Repo ma3u/hacknight" {
   [evals/run_eval.py\n+ questions*.json] as Evals
   [frontend/server.py\n(Proxy, stdlib)] as Server
   [frontend/index.html\nDuell-UI + Sounds] as UI
-  [frontend/make_sounds.sh] as Sounds
+  [frontend/make_sounds.py\n+ eleven.py] as Sounds
   [haystack-enterprise CLI] as CLI
 }
 
@@ -73,7 +73,8 @@ Server --> CLI : Sandbox-Modus
 Server --> SvcQuiz : Live-Modus (DEEPSET_API_KEY)
 UI --> Server : /api/questions, /api/ask
 Team --> UI
-Sounds --> Eleven : text-to-sound-effects
+Sounds --> Eleven : Sound-Effekte, Musik, Stimmen
+Server --> Eleven : Knut liest Fragen vor (TTS)
 UI ..> Sounds : sounds/*.mp3
 
 Host --> SvcQuiz : Frage (OpenAI-kompatibel)
@@ -227,6 +228,9 @@ richtigen Antworten gewinnt nach den Regeln Luna, weil es 19 % weniger Tokens br
 
 ### 5.3 Acht Modelle, gleiche Pipeline, gleiche Fragen
 
+Die vollständige Tabelle mit Genauigkeit und isolierter Geschwindigkeit pro Agent: [`evals/RESULTS.md`](../evals/RESULTS.md)
+(neu erzeugen: `uv run python evals/summarize.py`). Isoliert gemessen ist gpt-5.4-mini mit 3,0 s auch das schnellste der genauesten Modelle.
+
 Alle Modelle laufen in derselben Pipeline (Solver + Agent), jeweils mit ihrer besten Einstellung: Reasoning-Modelle mit
 `reasoning_effort: low`, gpt-4.1/gpt-4o-mini mit 1 Token und `logit_bias` auf A–D (sonst antworten sie „C) 87.5%“).
 
@@ -258,6 +262,7 @@ Revision von `quiz-luna`. So bleiben beide Agenten identisch bis auf das Modell,
 
 ## 7. Risiken und offene Punkte
 
+- **Sandbox-Warteschlange:** Ein Lauf allein dauert 2–4 s, drei gleichzeitig 6–14 s. Das Frontend lässt die 8 KIs deshalb nacheinander laufen (`SANDBOX_PARALLEL=1`).
 - **Kaltstart:** Serverless-Services gehen in „Standby“; die erste Frage kann 6–16 s brauchen (Limit 15 s). Kurz vor dem Quiz eine Frage senden.
 - **Token-Zählung bei 0-Token-Antworten:** Wie das Leaderboard Antworten ohne LLM-Aufruf (fehlendes `usage`) wertet, ist nicht bestätigt.
 - **Datensatzfehler:** Öffentliche Trivia-Sets enthalten falsche Lösungen; 99 %+ ist nahe an der Messgrenze.
@@ -271,6 +276,6 @@ uv run python check.py                                   # 3 Beispielfragen in d
 QZ_SET=trivia/questions_trivia.json QZ_TAG=_trivia uv run python evals/run_eval.py p1_pipeline
 haystack-enterprise deploy agent.py quiz                 # gpt-5.4
 haystack-enterprise deploy agent_luna.py quiz-luna --io-config agent.io.yaml
-./frontend/make_sounds.sh                                # ElevenLabs-CLI, einmalig
+uv run python frontend/make_sounds.py                    # ElevenLabs (CLI oder ELEVEN_LABS_API_KEY aus .env), einmalig
 uv run python frontend/server.py                         # http://localhost:8765
 ```

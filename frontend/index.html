@@ -521,7 +521,7 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
   });
 
   fetch("/api/questions").then(r => r.json()).then(data => {
-    pool = data.questions; AGENTS = data.agents;
+    pool = data.questions; AGENTS = data.agents; ttsOn = !!data.tts;
     const keys = Object.keys(AGENTS);
     AI().forEach((p, i) => { if (!AGENTS[p.agent]) p.agent = keys[i % keys.length]; });  // never "undefined"
     $("loadHint").textContent = `${pool.length} Fragen an Bord.`;
@@ -577,11 +577,35 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     groan: () => { tone("sawtooth", [220, 110], .9, .12, 0, 600); tone("sawtooth", [233, 116], .9, .08, .05, 500); },
     victory: () => { [0, .25, .5].forEach(t => drum(t, .6)); [392, 523, 659, 784].forEach((f, i) => tone("triangle", [f], .45, .16, .75 + i * .16)); tone("sawtooth", [98, 110], 2, .14, .75, 800); noise(2, .3, .9, 1200); },
   };
-  let haveFiles = false;  // probe once: are the ElevenLabs files there? If not, synth right away (no 404 delay)
-  fetch("sounds/music.mp3", { method: "HEAD" }).then(r => { haveFiles = r.ok; }).catch(() => {});
+  // Probe once which ElevenLabs files exist; missing effects are synthesized at once, missing voices stay silent.
+  const FILES = ["music", "horn", "drum", "reveal", "cheer", "groan", "victory", "knut_start", "knut_right", "knut_some",
+    "knut_nobody", "knut_victory", "warrior_win", "warrior_lose", "shieldmaiden_win", "shieldmaiden_lose"];
+  const have = new Set();
+  fetch("/api/sounds").then(r => r.json()).then(d => d.files.filter(n => FILES.includes(n)).forEach(n => have.add(n))).catch(() => {});
+  let ttsOn = false, speaking = null;
+  function voice(name, delay = 0) {  // ElevenLabs voice line, if generated
+    if (!soundOn || !have.has(name)) return;
+    setTimeout(() => { const a = new Audio(`sounds/${name}.mp3`); a.volume = .95; duck(a); a.play().catch(() => {}); }, delay);
+  }
+  function duck(a) {  // lower the music while someone speaks
+    if (!music) return;
+    music.volume = .07;
+    a.addEventListener("ended", () => { music.volume = .22; });
+  }
+  async function readAloud(q) {  // Knut reads the question: server-side ElevenLabs CLI, cached per question
+    if (!soundOn || !ttsOn) return;
+    const text = q.question + " " + q.options.map((o, i) => `${LETTERS[i]}: ${o}.`).join(" ");
+    try {
+      const r = await fetch("/api/tts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+      if (!r.ok) { ttsOn = false; return; }  // no credits or no access: stop asking for this session
+      if (current?.q !== q || current.revealed) return;
+      if (speaking) speaking.pause();
+      speaking = new Audio((await r.json()).url); speaking.volume = 1; duck(speaking); speaking.play().catch(() => {});
+    } catch {}
+  }
   function sound(name, volume = .8) {
     if (!soundOn) return;
-    if (!haveFiles) { try { SYNTH[name] && SYNTH[name](); } catch {} return; }
+    if (!have.has(name)) { try { SYNTH[name] && SYNTH[name](); } catch {} return; }
     const a = new Audio(`sounds/${name}.mp3`);
     a.volume = volume;
     a.play().catch(() => { try { SYNTH[name] && SYNTH[name](); } catch {} });
@@ -598,7 +622,7 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
   function startMusic() {
     if (!soundOn) return;
     audioCtx().resume();  // inside the click: unlocks audio under browser autoplay rules
-    if (!haveFiles) return startDrone();
+    if (!have.has("music")) return startDrone();
     if (!music) { music = new Audio("sounds/music.mp3"); music.loop = true; music.volume = .22; }
     music.play().catch(() => startDrone());
   }
@@ -637,7 +661,7 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     round = [...pool].sort(() => Math.random() - .5).slice(0, rounds);
     idx = 0; history = [];
     $("setup").hidden = true; $("result").hidden = true; $("quiz").hidden = false;
-    startMusic(); sound("horn", .7);
+    startMusic(); sound("horn", .7); voice("knut_start", 1400);
     renderRecords();
     show();
   }
@@ -714,12 +738,11 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     clearInterval(tick);
     tick = setInterval(() => { $("qTimer").textContent = ((performance.now() - current.startedAt) / 1000).toFixed(1) + " s"; }, 100);
     current.says = { human: { html: `<span class="bubble up">Du bist dran: A–D!</span>` } };
-    AI().forEach(p => {
-      current.says[p.id] = { html: `<span class="bubble up"><span class="spinner"></span>überlegt…</span>` };
-      askAgent(current, p);
-    });
+    AI().forEach(p => { current.says[p.id] = { html: `<span class="bubble up"><span class="spinner"></span>überlegt…</span>` }; });
+    [...AI()].sort(() => Math.random() - .5).forEach(p => askAgent(current, p));  // random order: no model always first in the queue
     renderArena(current.says);
     updateWaiting();
+    readAloud(q);
   }
 
   function updateWaiting() {
@@ -790,7 +813,10 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     history.push({ q, answers });
     sound("reveal", .55);
     const winners = PLAYERS.filter(p => answers[p.id].letter === q.answer).length;
+    if (speaking) speaking.pause();
     setTimeout(() => sound(winners ? "cheer" : "groan", .8), 450);
+    voice(winners === PLAYERS.length ? "knut_right" : winners === 0 ? "knut_nobody" : "knut_some", 1300);
+    voice(answers.human.letter === q.answer ? "warrior_win" : "warrior_lose", 3200);
     renderArena(says);
     renderRecords();
     $("hostSay").textContent = `Die Antwort ist ${q.answer}: ${q.options[LETTERS.indexOf(q.answer)]}! `
@@ -811,12 +837,13 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
 
   function finish() {
     $("quiz").hidden = true; $("result").hidden = false;
-    sound("victory", .9);
+    sound("victory", .9); voice("knut_victory", 1800);
     const ranked = ranking();
     const top = ranked[0];
     $("verdict").textContent = top.p.human ? `Skål! ${humanName} besiegt die Maschinen!`
       : `${CHARACTERS[top.p.char].name} mit ${modelOf(top.p)} erobert Vinland!`;
     setHost("happy");
+    if (!top.p.human) voice(CHARACTERS[top.p.char].female ? "shieldmaiden_win" : "warrior_win", 5200);
     renderRecords();
     $("podium").innerHTML = ranked.map((r, i) => `
       <div class="fighter ${i === 0 ? "win" : ""} ${r.p.human ? "is-human" : ""}" style="--c:${r.p.color}">

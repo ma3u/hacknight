@@ -4,6 +4,7 @@ Downloaded from [The Trivia API](https://the-trivia-api.com) (questions licensed
 with [`../fetch_trivia.py`](../fetch_trivia.py).
 
 - `raw.json`: the API responses as downloaded
+- [`QUESTIONS.md`](QUESTIONS.md): all 1000 questions as a readable table
 - `questions_trivia.json`: `[question, [A, B, C, D], answer letter, category, difficulty]`, options shuffled with seed 42
 
 Run an eval on them:

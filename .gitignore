@@ -3,3 +3,4 @@ __pycache__/
 *.result.json
 .venv/
 evals/results/
+frontend/sounds/tts/
