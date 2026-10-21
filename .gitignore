@@ -5,3 +5,4 @@ __pycache__/
 evals/results/
 frontend/sounds/tts/
 site/
+video/out/

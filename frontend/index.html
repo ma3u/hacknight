@@ -498,6 +498,8 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
   // Static GitHub Pages build (build_static.py sets data-static): no backend, the AI players replay their
   // recorded eval answers and tokens, timed with each model's measured isolated median.
   const STATIC = document.documentElement.dataset.static === "1";
+  // ?round=3,17,42 plays these questions in this order (shareable rounds); ?human=Name names the human player.
+  const PARAMS = new URLSearchParams(location.search);
 
   // ── players: one human, eight AI models ──
   const $ = (id) => document.getElementById(id);
@@ -518,6 +520,7 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
   let AGENTS = {}, pool = [], round = [], idx = 0, rounds = 10, history = [], current = null, tick = null;
   let humanName = "Team Vinland";
   try { humanName = localStorage.getItem("vinland-human") || humanName; } catch {}
+  humanName = PARAMS.get("human") || humanName;
   $("humanName").value = humanName;
   $("humanName").addEventListener("input", (e) => {
     humanName = e.target.value.trim() || "Team Vinland";
@@ -664,7 +667,8 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
 
   function start() {
     if (!pool.length) return;
-    round = [...pool].sort(() => Math.random() - .5).slice(0, rounds);
+    const fixed = (PARAMS.get("round") || "").split(",").filter(Boolean).map(Number).filter(i => pool[i]);
+    round = fixed.length ? fixed.map(i => pool[i]) : [...pool].sort(() => Math.random() - .5).slice(0, rounds);
     idx = 0; history = [];
     $("setup").hidden = true; $("result").hidden = true; $("quiz").hidden = false;
     startMusic(); sound("horn", .7); voice("knut_start", 1400);
@@ -684,7 +688,7 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
   // ranks after AI players with the same score.
   function ranking() {
     return PLAYERS.map(p => ({ p, ...stats(p) }))
-      .sort((x, y) => y.correct - x.correct || (x.p.human - y.p.human) || x.tokens - y.tokens || x.avg - y.avg);
+      .sort((x, y) => y.correct - x.correct || (!!x.p.human - !!y.p.human) || x.tokens - y.tokens || x.avg - y.avg);
   }
 
   function renderRecords() {

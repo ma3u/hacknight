@@ -38,7 +38,10 @@ def build_replay() -> None:
         agents[model] = {"label": model, "model": model, "note": f"{note} · Replay", "speed": median}
         for run in RUNS:
             for r in json.loads((RESULTS / f"p8_{model}_{run}.json").read_text()):
-                q = questions.setdefault(r["q"], {"question": r["q"], "answer": r["answer"], "answers": {}})
+                q = questions.setdefault(r["q"], {"question": r["q"], "answer": r["answer"], "answers": {}, "run": run})
+                if q["run"] != run:  # same text in two sets with different option order: ambiguous, skip it
+                    q["conflict"] = True
+                    continue
                 reply = (r["reply"] or "").strip()
                 q["answers"][model] = [reply if reply in ("A", "B", "C", "D") else None, reply[:40], r["tokens"], median]
     # options are not in the result rows: take them from the question sets
@@ -46,8 +49,9 @@ def build_replay() -> None:
     options = {}
     for name in ("questions.json", "questions_hard.json", "trivia/questions_trivia.json"):
         for row in json.loads((sets / name).read_text()):
-            options[row[0]] = row[1]
-    complete = [dict(q, options=options[k]) for k, q in questions.items() if len(q["answers"]) == len(MODELS) and k in options]
+            options.setdefault(row[0], row[1])  # own sets first: they own the shared texts
+    complete = [{k2: v for k2, v in dict(q, options=options[k]).items() if k2 != "run"} for k, q in questions.items()
+                if len(q["answers"]) == len(MODELS) and k in options and not q.get("conflict")]
     REPLAY.write_text(json.dumps({"agents": agents, "questions": complete}, ensure_ascii=False, separators=(",", ":")))
     print(f"replay.json: {len(complete)} questions x {len(agents)} models")
 
