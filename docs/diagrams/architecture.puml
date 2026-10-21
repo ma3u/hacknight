@@ -1,0 +1,59 @@
+@startuml architecture
+!theme plain
+skinparam componentStyle rectangle
+skinparam shadowing false
+title Team Vinland · Systemarchitektur
+
+actor "Quiz-Host\n(Agent Quiz, localhost:3000)" as Host
+actor "Team Vinland\n(Browser)" as Team
+
+package "Laptop · Repo ma3u/hacknight" {
+  [agent.py\nbuild_pipeline(model)] as AgentPy
+  [agent_luna.py] as LunaPy
+  [quick_answer.py\n@component QuickAnswer] as QA
+  [evals/run_eval.py\n+ questions*.json] as Evals
+  [frontend/server.py\n(Proxy, stdlib)] as Server
+  [frontend/index.html\nDuell-UI + Sounds] as UI
+  [frontend/make_sounds.sh] as Sounds
+  [haystack-enterprise CLI] as CLI
+}
+
+cloud "Haystack Enterprise Platform" {
+  node "Gateway" {
+    [Service quiz\ngpt-5.4-mini] as SvcQuiz
+    [Service quiz-luna\ngpt-5.6-luna] as SvcLuna
+  }
+  node "Pipeline (beide Services)" {
+    [QuickAnswer\n(Code-Komponente)] as PQA
+    [Agent\nOpenAIChatGenerator] as PAgent
+    [BranchJoiner] as PJoin
+  }
+  [Sandbox\n(run ohne Deploy)] as Sandbox
+  database "Org-Secrets\nOPENAI_API_KEY" as Secrets
+}
+
+cloud "OpenAI API" as OpenAI
+cloud "ElevenLabs API" as Eleven
+
+AgentPy ..> QA : importiert
+LunaPy ..> AgentPy : build_pipeline("gpt-5.6-luna")
+CLI --> SvcQuiz : deploy agent.py quiz (gpt-5.4-mini)
+CLI --> SvcLuna : deploy agent_luna.py quiz-luna
+CLI --> Sandbox : run (check.py, evals, Frontend)
+Evals --> CLI
+Server --> CLI : Sandbox-Modus
+Server --> SvcQuiz : Live-Modus (DEEPSET_API_KEY)
+UI --> Server : /api/questions, /api/ask
+Team --> UI
+Sounds --> Eleven : text-to-sound-effects
+UI ..> Sounds : sounds/*.mp3
+
+Host --> SvcQuiz : Frage (OpenAI-kompatibel)
+SvcQuiz --> PQA
+SvcLuna --> PQA
+PQA --> PJoin : beantwortet (0 Tokens)
+PQA --> PAgent : unbeantwortet
+PAgent --> PJoin
+PAgent --> OpenAI : 1 Aufruf, reasoning low
+Secrets ..> PAgent : OPENAI_API_KEY
+@enduml

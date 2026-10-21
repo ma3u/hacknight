@@ -1,0 +1,7 @@
+# I/O mapping for evals/agent_variant.py: a bare Agent, so the input goes straight to it.
+inputs:
+  messages:
+    - agent.messages
+outputs:
+  messages: agent.messages
+pipeline_output_type: chat

@@ -1,9 +1,9 @@
-# How the platform's inputs and outputs map onto the agent. Picked up automatically next to agent.py.
+# How the platform's inputs and outputs map onto the pipeline. Picked up automatically next to agent.py.
 inputs:
   messages:
-    - agent.messages
+    - quick.messages
 outputs:
-  messages: agent.messages
+  messages: joiner.value
 pipeline_output_type: chat
 # What the deployed agent installs. Nothing else is needed.
 dependencies:

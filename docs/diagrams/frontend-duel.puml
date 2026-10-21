@@ -1,0 +1,29 @@
+@startuml frontend-duel
+!theme plain
+skinparam shadowing false
+title Vinland Pub Quiz · Mensch gegen 8 KI-Modelle
+
+actor "Team Vinland" as Team
+participant "index.html\n(Knut + 9 Spieler)" as UI
+participant "server.py" as Srv
+participant "8 KI-Spieler\n(je ein Modell)" as A1
+
+Team -> UI : „Segel setzen“
+UI -> UI : Musik + Kriegshorn
+UI -> Srv : GET /api/questions
+Srv --> UI : 1060 Fragen + 8 Modelle
+loop jede Frage
+  UI -> UI : Trommel, Knut stellt die Frage
+  par 8 KI-Spieler gleichzeitig
+    UI -> Srv : 8× POST /api/ask {agent: <Modell>}
+    Srv -> A1 : Sandbox-Run oder Live-Service
+    A1 --> Srv : "D", Tokens, Sekunden
+    Srv --> UI : letter, tokens, seconds
+  else Mensch
+    Team -> UI : Taste A–D (👤 Mensch)
+  end
+  Team -> UI : Auflösen
+  UI -> UI : Schwertklang, Markierung der Optionen,\nSprechblasen, Jubel oder Stöhnen
+end
+UI -> UI : Rekordleiste (führt / günstigste / schnellste KI),\nPodium nach Leaderboard-Regeln + Siegesfest
+@enduml

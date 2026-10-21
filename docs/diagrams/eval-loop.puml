@@ -1,0 +1,29 @@
+@startuml eval-loop
+!theme plain
+skinparam shadowing false
+title Eval-Schleife · Änderung → Messung → Entscheidung
+
+actor Entwickler as Dev
+participant "run_eval.py" as Eval
+participant "haystack-enterprise run" as CLI
+participant "Platform-Sandbox" as SB
+participant "OpenAI" as OAI
+
+Dev -> Eval : Variante (Modell, Prompt, Tools, kwargs)
+loop jede Frage (10–12 parallel)
+  Eval -> CLI : run <pipeline.py> --query "Frage + A–D"
+  CLI -> CLI : Pipeline lokal laden, serialisieren,\n@component → Code-Komponente
+  CLI -> SB : YAML + Inputs ausführen
+  SB -> OAI : Chat-Aufruf (falls nicht vom Solver gelöst)
+  OAI --> SB : Antwort + usage
+  SB --> CLI : Pipeline-Output (JSON)
+  CLI --> Eval : result.json
+  Eval -> Eval : Format exakt [ABCD]? richtig? Tokens? Zeit?
+end
+Eval --> Dev : x/N richtig · Tokens/Frage · Fehlerliste
+alt Genauigkeit gleich oder besser und weniger Tokens
+  Dev -> CLI : deploy agent.py quiz
+else
+  Dev -> Dev : verwerfen, nächste Hypothese
+end
+@enduml

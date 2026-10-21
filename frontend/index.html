@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinland Pub Quiz</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%23c4372d' stroke='%2305070f' stroke-width='6'/%3E%3Ccircle cx='50' cy='50' r='24' fill='%23efe6d2'/%3E%3Cpath d='M50 30v40M36 40l28 20M64 40L36 60' stroke='%2305070f' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --night: #070b1a;
+  --deep: #0c1630;
+  --fjord: #12264a;
+  --ink: #05070f;
+  --bone: #efe6d2;
+  --bone-dim: #b9b09c;
+  --gold: #e4b04a;
+  --blood: #c4372d;
+  --aurora-1: #3ef0b5;
+  --aurora-2: #2bb3ff;
+  --aurora-3: #a66bff;
+  --ok: #3ed598;
+  --bad: #ff5a4e;
+  --card: rgba(9, 14, 30, 0.78);
+  --line: rgba(239, 230, 210, 0.16);
+  --radius: 14px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--night);
+  color: var(--bone);
+  font: 16px/1.5 Inter, system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ───────────── animated background ───────────── */
+.scene { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+  background: linear-gradient(180deg, #050816 0%, #0a1430 45%, #10305a 72%, #0b1e3c 100%); }
+.stars { position: absolute; inset: 0 0 35% 0; }
+.star { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff;
+  animation: twinkle var(--d, 4s) ease-in-out infinite; animation-delay: var(--delay, 0s); opacity: .7; }
+@keyframes twinkle { 0%, 100% { opacity: .15; } 50% { opacity: .95; } }
+
+.aurora { position: absolute; left: -20%; width: 140%; height: 38%; top: 4%; filter: blur(38px); opacity: .55; mix-blend-mode: screen; }
+.aurora span { position: absolute; inset: 0; border-radius: 50%;
+  background: linear-gradient(90deg, transparent 0%, var(--c) 30%, transparent 55%, var(--c) 75%, transparent 100%);
+  transform-origin: 50% 100%; animation: aurora var(--t) ease-in-out infinite alternate; }
+.aurora span:nth-child(1) { --c: var(--aurora-1); --t: 14s; top: 0; }
+.aurora span:nth-child(2) { --c: var(--aurora-2); --t: 19s; top: 12%; opacity: .7; animation-direction: alternate-reverse; }
+.aurora span:nth-child(3) { --c: var(--aurora-3); --t: 23s; top: 22%; opacity: .5; }
+@keyframes aurora {
+  0% { transform: translateX(-8%) skewX(-12deg) scaleY(.7); }
+  50% { transform: translateX(4%) skewX(10deg) scaleY(1.1); }
+  100% { transform: translateX(10%) skewX(-6deg) scaleY(.85); }
+}
+
+.moon { position: absolute; right: 12%; top: 9%; width: 110px; height: 110px; border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #fff8e6 0%, #efe2bd 45%, #c9b98c 100%);
+  box-shadow: 0 0 60px 18px rgba(255, 240, 200, .25);
+  -webkit-mask: radial-gradient(circle, #000 1.6px, transparent 1.8px) 0 0 / 7px 7px, linear-gradient(#000 0 0);
+  -webkit-mask-composite: source-over; }
+.moon::after { content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,0,0,.18) 1.4px, transparent 1.6px) 0 0 / 6px 6px; }
+
+.speedlines { position: absolute; left: 50%; top: 40%; width: 220vmax; height: 220vmax; transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(from 0deg, rgba(239,230,210,.05) 0deg 0.6deg, transparent 0.6deg 7deg);
+  -webkit-mask: radial-gradient(circle, transparent 18%, #000 60%);
+  mask: radial-gradient(circle, transparent 18%, #000 60%);
+  animation: spin 240s linear infinite; }
+@keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+.fjord { position: absolute; left: 0; right: 0; bottom: 18%; width: 100%; height: 34%; }
+.waves { position: absolute; left: 0; right: 0; bottom: 0; height: 30%; }
+.wave { position: absolute; left: 0; bottom: 0; width: 200%; height: 100%; animation: drift var(--s) linear infinite; }
+@keyframes drift { to { transform: translateX(-50%); } }
+
+.ship { position: absolute; left: 16%; bottom: 17%; width: min(380px, 52vw); transform: translateX(-50%);
+  animation: sail 9s ease-in-out infinite; transform-origin: 50% 80%; }
+@keyframes sail {
+  0%, 100% { transform: translateX(-52%) translateY(0) rotate(-1.6deg); }
+  50% { transform: translateX(-48%) translateY(-8px) rotate(1.8deg); }
+}
+.ship .sail { animation: billow 4.5s ease-in-out infinite; transform-origin: 50% 0; }
+@keyframes billow { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(1.035); } }
+
+.snow { position: absolute; inset: 0; }
+.flake { position: absolute; top: -10px; width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,.75);
+  animation: fall var(--f, 12s) linear infinite; animation-delay: var(--delay, 0s); }
+@keyframes fall { to { transform: translate(var(--x, 40px), 110vh); } }
+
+.halftone { position: absolute; inset: 0;
+  background: radial-gradient(circle, rgba(5,7,15,.55) 1px, transparent 1.3px) 0 0 / 5px 5px;
+  -webkit-mask: linear-gradient(180deg, transparent 0%, transparent 55%, #000 100%);
+  mask: linear-gradient(180deg, transparent 0%, transparent 55%, #000 100%); opacity: .6; }
+.vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 45%, rgba(5,7,15,.85) 100%); }
+
+/* ───────────── foreground ───────────── */
+.app { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 22px 16px 60px; }
+header { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.badge { position: relative; width: 84px; height: 84px; flex: none; }
+.badge svg { width: 100%; height: 100%; }
+.badge .ring { animation: spin-ring 40s linear infinite; transform-origin: 50% 50%; }
+@keyframes spin-ring { to { transform: rotate(360deg); } }
+.title h1 { margin: 0; font: 900 clamp(26px, 5vw, 44px)/1.05 "Cinzel Decorative", serif; letter-spacing: .02em;
+  color: var(--bone); text-shadow: 3px 3px 0 var(--ink), -1px -1px 0 var(--ink), 0 0 24px rgba(62,240,181,.25); }
+.soundbtn { margin-left: auto; font: 600 13px Inter; color: var(--bone); background: var(--card); border: 1px solid var(--line);
+  border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+.soundbtn[aria-pressed="false"] { color: var(--bone-dim); }
+.title p { margin: 4px 0 0; font: 500 13px/1.3 Cinzel, serif; letter-spacing: .28em; text-transform: uppercase; color: var(--gold); }
+
+.card { position: relative; background: var(--card); border: 2px solid var(--ink); outline: 1px solid var(--line); outline-offset: -6px;
+  border-radius: var(--radius); padding: 22px; backdrop-filter: blur(8px);
+  box-shadow: 6px 6px 0 var(--ink), 0 20px 60px rgba(0,0,0,.45); margin-top: 18px; }
+
+/* characters */
+.portrait { width: 100%; height: 100%; display: block; }
+.bubble { position: relative; background: #fffdf6; color: var(--ink); border: 3px solid var(--ink); border-radius: 18px;
+  padding: 8px 12px; font: 700 14px/1.25 Inter; box-shadow: 3px 3px 0 var(--ink); }
+.bubble::after { content: ""; position: absolute; width: 14px; height: 14px; background: #fffdf6;
+  border-left: 3px solid var(--ink); border-bottom: 3px solid var(--ink); }
+.bubble.left::after { left: -9px; top: 50%; transform: translateY(-50%) rotate(45deg); }
+.bubble.up::after { top: -9px; left: 26px; transform: rotate(135deg); }
+.bubble.shout { font-family: "Cinzel Decorative", serif; font-size: 16px; animation: pop .35s cubic-bezier(.2,1.6,.4,1); }
+@keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.host { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.host .frame { width: 96px; height: 96px; flex: none; border-radius: 50%; border: 3px solid var(--ink); background: radial-gradient(circle at 50% 40%, #2a4a7a, #0c1630);
+  overflow: hidden; box-shadow: 3px 3px 0 var(--ink), 0 0 0 3px var(--gold); }
+.host .name { font: 700 11px/1 Inter; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+
+.meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; color: var(--bone-dim); }
+.meta .rune { font-size: 18px; color: var(--gold); letter-spacing: .3em; }
+.progress { height: 6px; background: rgba(239,230,210,.1); border-radius: 99px; margin: 10px 0 16px; overflow: hidden; }
+.progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--gold), var(--blood)); transition: width .4s; }
+.question { font: 700 clamp(19px, 3.2vw, 28px)/1.25 Cinzel, serif; margin: 0 0 18px; text-wrap: balance; }
+
+.options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.opt { position: relative; display: flex; align-items: center; gap: 14px; text-align: left; cursor: pointer;
+  font: 600 17px/1.3 Inter; color: var(--bone); background: rgba(18, 38, 74, .75);
+  border: 2px solid var(--ink); border-radius: 12px; padding: 16px; min-height: 64px;
+  box-shadow: 4px 4px 0 var(--ink); transition: transform .12s, box-shadow .12s, background .2s; }
+.opt:hover:not(:disabled) { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); background: rgba(28, 58, 108, .85); }
+.opt:disabled { cursor: default; }
+.opt .l { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px;
+  background: var(--bone); color: var(--ink); font: 900 18px/1 "Cinzel Decorative", serif; }
+.opt.picked { background: rgba(228, 176, 74, .32); border-color: var(--gold); box-shadow: 4px 4px 0 var(--ink), 0 0 0 3px rgba(228, 176, 74, .35); }
+.opt.correct { background: rgba(62, 213, 152, .3); border-color: var(--ok); }
+.opt.wrong { background: rgba(255, 90, 78, .28); border-color: var(--bad); }
+.tags { position: absolute; top: -11px; right: 8px; display: flex; gap: 4px; }
+.tag { font: 800 10px/1 Inter; letter-spacing: .08em; text-transform: uppercase; padding: 4px 7px; border-radius: 6px; border: 2px solid var(--ink); color: var(--ink); }
+
+/* contenders */
+.arena { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+.fighter { position: relative; display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: start;
+  background: rgba(5,7,15,.45); border: 2px solid var(--ink); border-radius: 12px; padding: 10px; box-shadow: 3px 3px 0 var(--ink); }
+.fighter::before { content: ""; position: absolute; inset: 0; border-radius: 10px; border-top: 4px solid var(--c); pointer-events: none; }
+.fighter .frame { width: 76px; height: 76px; border-radius: 10px; overflow: hidden; border: 2px solid var(--ink);
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--c) 35%, #0c1630), #0c1630); }
+.fighter.win .frame { animation: burst .6s ease-out; }
+@keyframes burst { 0% { box-shadow: 0 0 0 0 var(--c); } 100% { box-shadow: 0 0 0 14px transparent; } }
+.fighter .who { font: 700 15px/1.15 Cinzel, serif; }
+.fighter .role { font: 600 11px/1.3 Inter; color: var(--bone-dim); margin: 2px 0 6px; }
+.fighter .score { font: 700 12px/1.3 Inter; color: var(--c); font-variant-numeric: tabular-nums; }
+.fighter .say { margin-top: 8px; grid-column: 1 / -1; min-height: 38px; }
+.fighter .say .bubble { display: inline-block; }
+.spinner { display: inline-block; vertical-align: middle; width: 16px; height: 16px; border-radius: 50%; border: 3px solid rgba(62,240,181,.2); border-top-color: var(--c); animation: spin-ring .8s linear infinite; margin-right: 6px; }
+.pill { display: inline-block; font: 700 11px/1 Inter; padding: 5px 8px; border-radius: 999px; background: rgba(239,230,210,.1); color: var(--bone); margin: 4px 4px 0 0; }
+.pill.zero { background: rgba(228,176,74,.2); color: var(--gold); }
+.pill.err { background: rgba(255,90,78,.2); color: var(--bad); }
+
+.actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+.btn { font: 700 14px/1 Cinzel, serif; letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
+  padding: 13px 18px; border-radius: 10px; border: 2px solid var(--ink); color: var(--ink); background: var(--gold); box-shadow: 4px 4px 0 var(--ink); }
+.btn.ghost { background: transparent; color: var(--bone); border-color: var(--line); box-shadow: none; }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn:not(:disabled):active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+
+.setup { display: grid; gap: 16px; text-align: center; padding: 6px; }
+.setup h2 { margin: 0; font: 700 clamp(22px, 4vw, 32px)/1.2 Cinzel, serif; }
+.setup p { margin: 0 auto; max-width: 620px; color: var(--bone-dim); }
+.lineup { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: left; }
+.lineup .fighter { grid-template-columns: 64px 1fr; }
+.lineup .fighter .frame { width: 64px; height: 64px; }
+.lineup select { width: 100%; margin-top: 4px; font: 600 13px Inter; color: var(--bone); background: #0c1630; border: 1px solid var(--line); border-radius: 8px; padding: 7px; }
+.seg { display: inline-flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.seg button { font: 600 14px Inter; padding: 9px 14px; border-radius: 9px; cursor: pointer; color: var(--bone);
+  background: rgba(18,38,74,.7); border: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--bone); color: var(--ink); border-color: var(--bone); }
+.verdict { font: 900 clamp(26px, 5.5vw, 48px)/1.1 "Cinzel Decorative", serif; color: var(--gold); text-shadow: 3px 3px 0 var(--ink); }
+.podium { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; text-align: left; }
+.podium .rank { font: 900 22px/1 "Cinzel Decorative", serif; color: var(--c); }
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+th, td { padding: 7px 6px; border-bottom: 1px solid var(--line); }
+th { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--bone-dim); }
+td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ok { color: var(--ok); } .bad { color: var(--bad); }
+.hint { font-size: 12px; color: var(--bone-dim); text-align: center; margin-top: 14px; }
+kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--line); background: rgba(255,255,255,.06); }
+[hidden] { display: none !important; }
+
+@media (max-width: 760px) {
+  .arena, .lineup, .podium { grid-template-columns: 1fr; }
+  .options { grid-template-columns: 1fr; }
+  .card { padding: 16px; }
+  .host .frame { width: 72px; height: 72px; }
+  .title p { letter-spacing: .12em; font-size: 11px; }
+}
+
+/* human vs AI, records, nine-player arena */
+.kind { display: inline-block; font: 800 10px/1 Inter; letter-spacing: .08em; text-transform: uppercase; padding: 4px 7px; border-radius: 6px; margin-bottom: 4px; }
+.kind.human { background: var(--gold); color: var(--ink); }
+.kind.ai { background: rgba(239,230,210,.12); color: var(--bone); }
+.fighter.is-human { border-color: var(--gold); box-shadow: 3px 3px 0 var(--ink), 0 0 0 2px rgba(228,176,74,.45); }
+.human-setup { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.human-setup label { font: 600 13px Inter; color: var(--bone-dim); }
+.human-setup input { font: 700 15px Inter; color: var(--ink); background: var(--bone); border: 2px solid var(--ink); border-radius: 8px; padding: 8px 10px; width: 200px; }
+.records { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
+.record { display: grid; grid-template-columns: 52px 1fr; gap: 10px; align-items: center; background: var(--card); border: 2px solid var(--ink);
+  border-radius: 12px; padding: 8px 10px; box-shadow: 3px 3px 0 var(--ink); border-top: 4px solid var(--c, var(--gold)); backdrop-filter: blur(6px); }
+.record .frame { width: 52px; height: 52px; border-radius: 8px; overflow: hidden; border: 2px solid var(--ink); background: #0c1630; }
+.record .rk { display: block; font: 700 11px/1.2 Inter; letter-spacing: .1em; text-transform: uppercase; color: var(--bone-dim); }
+.record .rv { display: block; font: 700 18px/1.2 Cinzel, serif; color: var(--c, var(--bone)); }
+.record .rs { display: block; font: 500 12px/1.3 Inter; color: var(--bone-dim); }
+.arena { grid-template-columns: repeat(3, 1fr); }
+.fighter { grid-template-columns: 60px 1fr; }
+.fighter .frame { width: 60px; height: 60px; }
+.fighter .say { min-height: 30px; margin-top: 6px; }
+.fighter .say .bubble { font-size: 12px; padding: 5px 9px; }
+.lineup { grid-template-columns: repeat(4, 1fr); }
+.waiting { margin-right: auto; align-self: center; font: 600 13px Inter; color: var(--bone-dim); }
+.tags { flex-wrap: wrap; justify-content: flex-end; max-width: 75%; }
+.tag { font-size: 9px; padding: 3px 5px; }
+.spinner { border-top-color: var(--c, var(--aurora-1)); }
+@media (max-width: 900px) { .lineup { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 760px) { .records, .arena, .lineup { grid-template-columns: 1fr; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="scene" aria-hidden="true">
+  <div class="speedlines"></div>
+  <div class="aurora"><span></span><span></span><span></span></div>
+  <div class="stars" id="stars"></div>
+  <div class="moon"></div>
+
+  <svg class="fjord" viewBox="0 0 1440 400" preserveAspectRatio="none">
+    <path d="M0 400 L0 210 L90 150 L170 190 L260 90 L330 160 L410 120 L520 220 L600 260 L700 240 L760 270 L1440 270 L1440 400 Z" fill="#0b1a33"/>
+    <path d="M1440 400 L1440 170 L1360 110 L1290 170 L1210 60 L1130 150 L1060 120 L980 210 L900 250 L820 265 L700 275 L1440 275 Z" fill="#0a1730"/>
+    <path d="M0 400 L0 280 L140 230 L240 268 L380 240 L520 285 L1440 290 L1440 400 Z" fill="#081227"/>
+    <path d="M1210 60 L1236 96 L1222 92 L1250 128 L1196 92 L1186 98 Z M260 90 L282 120 L270 118 L292 146 L250 118 L240 122 Z" fill="#dfe8f5" opacity=".55"/>
+  </svg>
+
+  <svg class="ship" viewBox="0 0 440 300">
+    <g fill="none" stroke="#05070f" stroke-linejoin="round" stroke-linecap="round">
+      <line x1="220" y1="30" x2="220" y2="215" stroke-width="7"/>
+      <line x1="120" y1="40" x2="320" y2="40" stroke-width="6"/>
+      <g class="sail">
+        <path d="M124 44 Q220 64 316 44 L326 186 Q220 206 114 186 Z" fill="#efe6d2" stroke-width="5"/>
+        <path d="M150 49 L144 190 M190 56 L186 198 M250 56 L254 198 M290 49 L296 190" stroke="#c4372d" stroke-width="20"/>
+        <path d="M124 44 Q220 64 316 44 L326 186 Q220 206 114 186 Z" stroke-width="5"/>
+        <!-- raven banner -->
+        <path d="M196 118 Q212 96 232 104 Q244 92 258 100 Q246 106 244 116 Q256 128 246 140 Q234 128 222 132 Q210 146 194 142 Q206 132 202 124 Z" fill="#05070f" stroke="none"/>
+      </g>
+      <path d="M220 215 L400 160" stroke-width="2.5"/>
+      <path d="M220 215 L40 160" stroke-width="2.5"/>
+    </g>
+    <!-- hull with spiral prow and stern -->
+    <path d="M18 196 Q8 150 34 128 Q52 116 54 138 Q56 156 40 156 Q30 150 38 142
+             M38 156 Q60 238 220 244 Q380 238 404 160 Q410 140 424 136 Q436 150 422 170 Q418 186 404 196"
+          fill="none" stroke="#05070f" stroke-width="9" stroke-linecap="round"/>
+    <path d="M40 186 Q60 238 220 244 Q380 238 400 186 Z" fill="#3a2414" stroke="#05070f" stroke-width="5"/>
+    <path d="M56 202 Q220 222 384 202" stroke="#1d120a" stroke-width="3" fill="none"/>
+    <g stroke="#05070f" stroke-width="3">
+      <circle cx="84" cy="196" r="13" fill="#c4372d"/><circle cx="118" cy="200" r="13" fill="#efe6d2"/>
+      <circle cx="152" cy="203" r="13" fill="#e4b04a"/><circle cx="186" cy="205" r="13" fill="#c4372d"/>
+      <circle cx="220" cy="206" r="13" fill="#efe6d2"/><circle cx="254" cy="205" r="13" fill="#e4b04a"/>
+      <circle cx="288" cy="203" r="13" fill="#c4372d"/><circle cx="322" cy="200" r="13" fill="#efe6d2"/>
+      <circle cx="356" cy="196" r="13" fill="#e4b04a"/>
+    </g>
+    <g stroke="#05070f" stroke-width="4" stroke-linecap="round">
+      <line x1="100" y1="232" x2="80" y2="268"/><line x1="160" y1="238" x2="146" y2="276"/>
+      <line x1="220" y1="240" x2="214" y2="280"/><line x1="280" y1="238" x2="288" y2="276"/><line x1="340" y1="232" x2="356" y2="268"/>
+    </g>
+  </svg>
+
+  <div class="waves">
+    <svg class="wave" style="--s: 26s; opacity:.75" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 70 Q90 30 180 70 T360 70 T540 70 T720 70 T900 70 T1080 70 T1260 70 T1440 70 T1620 70 T1800 70 T1980 70 T2160 70 T2340 70 T2520 70 T2700 70 T2880 70 V200 H0Z" fill="#163a66" stroke="#05070f" stroke-width="4"/></svg>
+    <svg class="wave" style="--s: 18s" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 110 Q120 70 240 110 T480 110 T720 110 T960 110 T1200 110 T1440 110 T1680 110 T1920 110 T2160 110 T2400 110 T2640 110 T2880 110 V200 H0Z" fill="#0f2b52" stroke="#05070f" stroke-width="5"/><path d="M60 104 Q120 90 170 102 M540 104 Q600 90 650 102 M1020 104 Q1080 90 1130 102 M1500 104 Q1560 90 1610 102 M1980 104 Q2040 90 2090 102 M2460 104 Q2520 90 2570 102" stroke="#efe6d2" stroke-width="3" fill="none" opacity=".55"/></svg>
+    <svg class="wave" style="--s: 12s" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 150 Q80 120 160 150 T320 150 T480 150 T640 150 T800 150 T960 150 T1120 150 T1280 150 T1440 150 T1600 150 T1760 150 T1920 150 T2080 150 T2240 150 T2400 150 T2560 150 T2720 150 T2880 150 V200 H0Z" fill="#0a1f3d" stroke="#05070f" stroke-width="5"/></svg>
+  </div>
+
+  <div class="snow" id="snow"></div>
+  <div class="halftone"></div>
+  <div class="vignette"></div>
+</div>
+
+<main class="app">
+  <header>
+    <div class="badge" title="Team Vinland">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="47" fill="#05070f"/>
+        <circle cx="50" cy="50" r="44" fill="#c4372d" stroke="#efe6d2" stroke-width="2"/>
+        <g class="ring">
+          <path id="runepath" d="M50 50 m-34 0 a34 34 0 1 1 68 0 a34 34 0 1 1 -68 0" fill="none"/>
+          <text font-size="9.5" fill="#efe6d2" letter-spacing="2.2"><textPath href="#runepath">ᚠᚢᚦᚨᚱᚲ ᚷᚹᚺᚾᛁᛃ ᛇᛈᛉᛊᛏᛒ ᛖᛗᛚᛜᛞᛟ</textPath></text>
+        </g>
+        <circle cx="50" cy="50" r="24" fill="#efe6d2" stroke="#05070f" stroke-width="3"/>
+        <path d="M50 30 L50 70 M36 40 L64 60 M64 40 L36 60" stroke="#05070f" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="50" cy="50" r="6" fill="#e4b04a" stroke="#05070f" stroke-width="2.5"/>
+      </svg>
+    </div>
+    <div class="title">
+      <h1>Vinland Pub Quiz</h1>
+      <p>Mensch gegen acht KI-Modelle</p>
+    </div>
+    <button class="soundbtn" id="soundBtn" aria-pressed="true">🔊 Sound an</button>
+  </header>
+
+  <section class="records" id="records" aria-label="Rekorde" hidden></section>
+
+  <section class="card" id="setup">
+    <div class="host">
+      <div class="frame" data-portrait="knut"></div>
+      <div>
+        <div class="name">Knut der Große · Quizmaster</div>
+        <div class="bubble left">Ein Mensch tritt gegen acht KI-Modelle an. Wer die meisten Fragen trifft, gewinnt. Bei Gleichstand zählen Tokens, dann Zeit, wie im echten Quiz.</div>
+      </div>
+    </div>
+    <div class="setup">
+      <div class="human-setup">
+        <span class="kind human">👤 Mensch</span>
+        <label for="humanName">Euer Name als Spieler</label>
+        <input id="humanName" maxlength="24" value="Team Vinland">
+      </div>
+      <div class="lineup" id="lineup"></div>
+      <div class="seg" role="group" aria-label="Anzahl Fragen">
+        <button data-n="5">5 Fragen</button><button data-n="10" aria-pressed="true">10 Fragen</button><button data-n="20">20 Fragen</button>
+      </div>
+      <div><button class="btn" id="start">Segel setzen</button></div>
+      <div class="hint" id="loadHint">Fragen werden geladen…</div>
+    </div>
+  </section>
+
+  <section class="card" id="quiz" hidden>
+    <div class="host">
+      <div class="frame" data-portrait="knut"></div>
+      <div><div class="name">Knut der Große · Quizmaster</div><div class="bubble left" id="hostSay"></div></div>
+    </div>
+    <div class="meta"><span id="qNum">Frage 1/10</span><span class="rune">ᚠᚢᚦ</span><span id="qTimer">0.0 s</span></div>
+    <div class="progress"><i id="bar"></i></div>
+    <h2 class="question" id="qText"></h2>
+    <div class="options" id="opts"></div>
+    <div class="actions">
+      <span class="waiting" id="waiting"></span>
+      <button class="btn ghost" id="reveal" disabled>Auflösen</button>
+      <button class="btn" id="next" hidden>Nächste Frage</button>
+    </div>
+    <div class="arena" id="arena"></div>
+    <div class="hint">👤 Mensch: Tasten <kbd>A</kbd>–<kbd>D</kbd> · <kbd>Enter</kbd> zum Auflösen / Weiter</div>
+  </section>
+
+  <section class="card" id="result" hidden>
+    <div class="host">
+      <div class="frame" data-portrait="knut"></div>
+      <div><div class="name">Knut der Große · Quizmaster</div><div class="bubble left shout" id="verdict"></div></div>
+    </div>
+    <div class="setup">
+      <div class="podium" id="podium"></div>
+      <div class="tablewrap"><table>
+        <thead id="thead"></thead>
+        <tbody id="rows"></tbody>
+      </table></div>
+      <div><button class="btn" id="again">Neue Runde</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  // ── background particles ──
+  const stars = document.getElementById("stars");
+  for (let i = 0; i < 90; i++) {
+    const s = document.createElement("i");
+    s.className = "star";
+    s.style.left = Math.random() * 100 + "%";
+    s.style.top = Math.random() * 100 + "%";
+    s.style.setProperty("--d", 2 + Math.random() * 5 + "s");
+    s.style.setProperty("--delay", -Math.random() * 6 + "s");
+    if (Math.random() < .15) { s.style.width = s.style.height = "3px"; }
+    stars.appendChild(s);
+  }
+  const snow = document.getElementById("snow");
+  for (let i = 0; i < 40; i++) {
+    const f = document.createElement("i");
+    f.className = "flake";
+    f.style.left = Math.random() * 100 + "%";
+    f.style.setProperty("--f", 9 + Math.random() * 12 + "s");
+    f.style.setProperty("--delay", -Math.random() * 20 + "s");
+    f.style.setProperty("--x", (Math.random() * 120 - 40) + "px");
+    f.style.opacity = .3 + Math.random() * .6;
+    snow.appendChild(f);
+  }
+
+  // ── characters: original ink portraits of historical figures of the Vinland voyages ──
+  const INK = "#05070f", SKIN = "#f1d6b8", GOLD = "#e4b04a";
+  const S = `stroke="${INK}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"`;
+  // Seinen-anime look: angular jaw, hatched shadow side, sharp eyes with iris and highlight.
+  function face(mood, female, eye = "#5f7f9a") {
+    const brows = mood === "sad"
+      ? `<path d="M43 41 L55 45.5 M77 41 L65 45.5" ${S} stroke-width="${female ? 2 : 3.2}"/>`
+      : `<path d="M42 43 Q49 42 56.5 46 M78 43 Q71 42 63.5 46" fill="none" ${S} stroke-width="${female ? 2 : 3.4}"/>`;
+    const eyes = mood === "happy"
+      ? `<path d="M44.5 52.5 Q50 47.5 55.5 52 M64.5 52 Q70 47.5 75.5 52.5" fill="none" ${S} stroke-width="2.6"/>`
+      : `<path d="M44 52.5 Q49 49 56.5 51.5 L55 54.5 Q49 56 45.5 54.5Z M76 52.5 Q71 49 63.5 51.5 L65 54.5 Q71 56 74.5 54.5Z" fill="#fbf6ea"/>
+         <circle cx="51" cy="52.6" r="2.6" fill="${eye}"/><circle cx="69" cy="52.6" r="2.6" fill="${eye}"/>
+         <circle cx="51" cy="52.8" r="1.2" fill="${INK}"/><circle cx="69" cy="52.8" r="1.2" fill="${INK}"/>
+         <circle cx="51.9" cy="51.7" r=".8" fill="#fff"/><circle cx="69.9" cy="51.7" r=".8" fill="#fff"/>
+         <path d="M43.5 52.8 Q49 48.2 57 51.3 M76.5 52.8 Q71 48.2 63 51.3" fill="none" ${S} stroke-width="2.6"/>
+         <path d="M47 55.6 L53 55.8 M73 55.6 L67 55.8" ${S} stroke-width=".8" opacity=".35"/>`;
+    const lashes = female ? `<path d="M43.5 52.8 l-2.5 -2 M57 51.3 l2 -2.4 M76.5 52.8 l2.5 -2 M63 51.3 l-2 -2.4" ${S} stroke-width="1.4"/>` : "";
+    const scarsOfWar = "";
+    return brows + eyes + lashes + scarsOfWar
+      + `<path d="M61 56 L63.5 63.5 L59.5 64.2" fill="none" ${S} stroke-width="1.6"/>`;
+  }
+  function mouth(mood, y = 0, extra = "") {
+    if (mood === "happy") return `<path d="M52 ${69 + y} Q60 ${77 + y} 68 ${68.5 + y} Q60 ${72 + y} 52 ${69 + y}Z" fill="#5a1414" ${S} stroke-width="2"/>`
+      + `<path d="M54 ${70 + y} Q60 ${72 + y} 66 ${69.6 + y}" fill="none" stroke="#fff" stroke-width="1.6"/>${extra}`;
+    if (mood === "sad") return `<path d="M54 ${73 + y} Q60 ${69.5 + y} 66 ${73 + y}" fill="none" ${S} stroke-width="2"/>`;
+    return `<path d="M54.5 ${71 + y} L65.5 ${70.2 + y}" fill="none" ${S} stroke-width="2"/>`;
+  }
+  const HEAD = `<path d="M51 76 L50 91 Q60 96 70 91 L69 76 Z" fill="${SKIN}" ${S}/>
+    <path d="M59 80 L69 78 L69.6 89 Q64 86 59 80Z" fill="${INK}" opacity=".18"/>
+    <path d="M38.5 47 Q38 22 60 22 Q82 22 81.5 47 L80 63 Q77 74 67 81.5 L60 84.5 L53 81.5 Q43 74 40 63 Z" fill="${SKIN}" ${S}/>
+    <path d="M70 26 Q81.5 33 81.5 47 L80 63 Q77 74 67 81.5 L62 83.5 Q71 71 72.5 56 Q73 40 70 26Z" fill="${INK}" opacity=".13"/>
+    <path d="M74 60 l4 -3 M73 64 l4 -3 M71 68 l4 -3 M69 72 l3.5 -2.6" ${S} stroke-width="1" opacity=".4"/>
+    <path d="M39 50 q-5 2 -2.4 9 q2 4 4 2 M81 50 q5 2 2.4 9 q-2 4 -4 2" fill="${SKIN}" ${S} stroke-width="2.2"/>`;
+
+  // c: hair, style (short|long|top|bald), beard (none|short|full|braided), gear (hood|helmet|crown|circlet|headband|scarf),
+  //    cloak, fur (zigzag|bear), brooch, scar, patch, braids, female, tooth
+  function draw(c, mood) {
+    const p = [];
+    if (c.style === "long" || c.braids) p.push(`<path d="M36 48 Q31 20 60 19 Q89 20 84 48 Q90 82 82 100 L76 62 L44 62 L38 100 Q30 82 36 48Z" fill="${c.hair}" ${S}/>`);
+    if (c.gear === "hood") p.push(`<path d="M29 62 Q26 14 60 12 Q94 14 91 62 L86 92 Q60 82 34 92Z" fill="${c.gearColor}" ${S}/>`);
+    p.push(`<path d="M4 122 Q12 90 60 86 Q108 90 116 122 Z" fill="${c.cloak}" ${S}/>`);
+    if (c.fur === "zigzag") p.push(`<path d="M14 104 l8 -9 l6 9 l8 -9 l6 9 l8 -9 l8 9 l8 -9 l8 9 l8 -9 l6 9 l8 -9" fill="none" stroke="#e8e2d4" stroke-width="6" stroke-linejoin="round"/>`);
+    if (c.fur === "bear") p.push(`<path d="M8 112 l7 -12 l5 10 l7 -13 l6 12 l7 -12 l7 12 l6 -12 l7 12 l7 -12 l6 12 l7 -13 l5 10 l7 -12" fill="none" stroke="#6e5137" stroke-width="7" stroke-linejoin="round"/>`);
+    if (c.brooch) p.push(`<circle cx="60" cy="102" r="6.5" fill="${GOLD}" ${S}/>`);
+    p.push(HEAD, face(mood, c.female, c.eye));
+    if (c.scar) p.push(`<path d="M68 46 L75 63" stroke="#9b2b2b" stroke-width="2.4" stroke-linecap="round"/>`);
+    if (c.patch) p.push(`<path d="M40 44 L82 60" ${S} stroke-width="2"/><ellipse cx="69.5" cy="52.5" rx="7.5" ry="6.5" fill="${INK}"/>`);
+    const toothy = c.tooth ? `<rect x="58" y="${70}" width="4" height="4" fill="#2b6bff" stroke="${INK}" stroke-width="1"/>` : "";
+    if (c.beard === "short") p.push(`<path d="M44 67 Q48 85 60 87 Q72 85 76 67 Q70 77 60 78 Q50 77 44 67Z" fill="${c.beardColor || c.hair}" ${S}/>`, mood === "happy" ? mouth(mood, 1, toothy) : "");
+    else if (c.beard === "full") p.push(`<path d="M40 62 Q42 94 60 102 Q78 94 80 62 Q74 77 60 77 Q46 77 40 62Z" fill="${c.beardColor || c.hair}" ${S}/>
+        <path d="M50 84 l3 8 M60 86 l0 9 M70 84 l-3 8" ${S} stroke-width="1.6" opacity=".5"/>`, mouth(mood, 0, toothy));
+    else if (c.beard === "braided") p.push(`<path d="M40 61 Q40 95 50 114 L56 97 L60 116 L64 97 L70 114 Q80 95 80 61 Q72 79 60 79 Q48 79 40 61Z" fill="${c.beardColor || c.hair}" ${S}/>
+        <path d="M48 104 h6 M66 104 h6" stroke="${GOLD}" stroke-width="4"/>`, mouth(mood, 1, toothy));
+    else p.push(mouth(mood, 0, toothy));
+    if (c.braids) p.push(`<path d="M39 58 Q33 80 37 104 M81 58 Q87 80 83 104" fill="none" stroke="${c.hair}" stroke-width="9" stroke-linecap="round"/>
+        <path d="M39 58 Q33 80 37 104 M81 58 Q87 80 83 104" fill="none" ${S} stroke-width="1.5" stroke-dasharray="3 4"/>`);
+    if (c.style === "short") p.push(`<path d="M38 44 Q37 24 60 22 Q83 24 82 44 L78 36 L74 41 L69 31 L63 39 L58 30 L52 39 L47 32 L43 41 Z" fill="${c.hair}" ${S}/>`);
+    if (c.style === "top" || c.style === "long" && !c.female) p.push(`<path d="M35 54 L33 40 Q31 16 60 15 Q89 16 87 40 L85 54 L81 38 L77 46 L72 31 L66 40 L60 28 L54 40 L48 31 L43 46 L39 38 Z" fill="${c.hair}" ${S}/>
+        <path d="M48 22 Q56 19 66 21" fill="none" stroke="#fff" stroke-width="2" opacity=".35"/>`);
+    if (c.female) p.push(`<path d="M37 48 Q38 22 60 21 Q82 22 83 48 Q76 30 60 34 Q44 30 37 48Z" fill="${c.hair}" ${S}/>`);
+    if (c.gear === "helmet") p.push(`<path d="M35 45 Q35 13 60 12 Q85 13 85 45 Z" fill="#8a94a6" ${S}/><path d="M60 13 L60 44" ${S} stroke-width="2" opacity=".5"/>
+        <path d="M33 45 L87 45" ${S} stroke-width="6"/><path d="M33 45 L87 45" stroke="#8a94a6" stroke-width="2.5"/><path d="M57 44 L57 62 L63 62 L63 44" fill="#8a94a6" ${S}/>`);
+    if (c.gear === "crown") p.push(`<path d="M40 30 L40 15 L47 23 L53 10 L60 21 L67 10 L73 23 L80 15 L80 30 Z" fill="${GOLD}" ${S}/>
+        <circle cx="60" cy="26" r="3" fill="#c4372d"/><circle cx="48" cy="26" r="2" fill="#2bb3ff"/><circle cx="72" cy="26" r="2" fill="#2bb3ff"/>`);
+    if (c.gear === "circlet") p.push(`<path d="M37 38 Q60 30 83 38" fill="none" ${S} stroke-width="7"/><path d="M37 38 Q60 30 83 38" fill="none" stroke="${GOLD}" stroke-width="3.5"/>`);
+    if (c.gear === "headband") p.push(`<path d="M37 40 Q60 33 83 40" fill="none" ${S} stroke-width="8"/><path d="M37 40 Q60 33 83 40" fill="none" stroke="${c.gearColor}" stroke-width="4.5"/>`);
+    if (c.gear === "scarf") p.push(`<path d="M33 54 Q30 16 60 14 Q90 16 87 54 Q82 30 60 28 Q38 30 33 54Z" fill="${c.gearColor}" ${S}/>`);
+    return p.join("");
+  }
+  const CHARACTERS = {
+    knut:      { name: "Knut der Große", short: "Knut", hair: "#2b2118", style: "long", beard: "none", gear: "crown", cloak: "#8e1f1f", brooch: true , eye: "#3d6e8f" },
+    leif:      { name: "Leif Eriksson", short: "Leif", hair: "#c1532b", style: "top", beard: "full", cloak: "#5b3a22", fur: "zigzag" , eye: "#4f7a3a" },
+    karlsefni: { name: "Thorfinn Karlsefni", short: "Thorfinn", hair: "#6b4226", style: "short", beard: "short", gear: "hood", gearColor: "#1f5a4a", cloak: "#2c6b57", brooch: true , eye: "#6b4a2a" },
+    thorkell:  { name: "Thorkell der Hohe", short: "Thorkell", hair: "#8a8a82", style: "bald", beard: "braided", beardColor: "#b9b7ae", gear: "helmet", cloak: "#3b2a1e", fur: "bear", scar: true , eye: "#4a5a6a" },
+    freydis:   { name: "Freydís Eiríksdóttir", short: "Freydís", hair: "#e3c26a", braids: true, female: true, beard: "none", gear: "headband", gearColor: "#c4372d", cloak: "#2a4f8f", fur: "zigzag" , eye: "#2f7fbf" },
+    gudrid:    { name: "Guðríður Þorbjarnardóttir", short: "Guðríður", hair: "#3a2a20", style: "long", female: true, beard: "none", gear: "scarf", gearColor: "#6d4c9f", cloak: "#4b3a7a", brooch: true , eye: "#6b4a8a" },
+    erik:      { name: "Erik der Rote", short: "Erik", hair: "#d0461f", style: "long", beard: "braided", beardColor: "#d0461f", cloak: "#7a1d1d", fur: "bear", patch: true , eye: "#7a8a3a" },
+    bjarni:    { name: "Bjarni Herjólfsson", short: "Bjarni", hair: "#1d1d22", style: "short", beard: "short", gear: "headband", gearColor: "#2f8f8a", cloak: "#21535a" , eye: "#2a5a5a" },
+    harald:    { name: "Harald Blauzahn", short: "Harald", hair: "#e9e6dc", style: "top", beard: "full", beardColor: "#e9e6dc", gear: "crown", cloak: "#1e3f8f", brooch: true, tooth: true , eye: "#3a5fbf" },
+    olaf:      { name: "Olaf Tryggvason", short: "Olaf", hair: "#e3b54a", style: "short", beard: "short", gear: "circlet", cloak: "#9b2a2a", fur: "zigzag" , eye: "#3f8fbf" },
+  };
+  const portrait = (key, mood = "neutral") =>
+    `<svg class="portrait" viewBox="0 0 120 120" role="img" aria-label="${CHARACTERS[key].name}">${draw(CHARACTERS[key], mood)}</svg>`;
+  const setHost = (mood) => document.querySelectorAll('[data-portrait="knut"]').forEach(el => el.innerHTML = portrait("knut", mood));
+  setHost("neutral");
+
+  // ── players: one human, eight AI models ──
+  const $ = (id) => document.getElementById(id);
+  const LETTERS = ["A", "B", "C", "D"];
+  const pickOne = (a) => a[Math.floor(Math.random() * a.length)];
+  const PLAYERS = [
+    { id: "human", char: "leif", color: "#e4b04a", human: true },
+    { id: "p1", char: "karlsefni", color: "#3ef0b5", agent: "gpt-5.4-mini" },
+    { id: "p2", char: "thorkell", color: "#a66bff", agent: "gpt-5.6-luna" },
+    { id: "p3", char: "freydis", color: "#2bb3ff", agent: "gpt-5.4" },
+    { id: "p4", char: "gudrid", color: "#ff5ea8", agent: "gpt-5.4-nano" },
+    { id: "p5", char: "erik", color: "#ff7a59", agent: "gpt-5.1" },
+    { id: "p6", char: "bjarni", color: "#9be15d", agent: "gpt-5-mini" },
+    { id: "p7", char: "harald", color: "#6fa8ff", agent: "gpt-4.1" },
+    { id: "p8", char: "olaf", color: "#f2d45c", agent: "gpt-4o-mini" },
+  ];
+  const AI = () => PLAYERS.filter(p => !p.human);
+  let AGENTS = {}, pool = [], round = [], idx = 0, rounds = 10, history = [], current = null, tick = null;
+  let humanName = "Team Vinland";
+  try { humanName = localStorage.getItem("vinland-human") || humanName; } catch {}
+  $("humanName").value = humanName;
+  $("humanName").addEventListener("input", (e) => {
+    humanName = e.target.value.trim() || "Team Vinland";
+    try { localStorage.setItem("vinland-human", humanName); } catch {}
+  });
+
+  fetch("/api/questions").then(r => r.json()).then(data => {
+    pool = data.questions; AGENTS = data.agents;
+    const keys = Object.keys(AGENTS);
+    AI().forEach((p, i) => { if (!AGENTS[p.agent]) p.agent = keys[i % keys.length]; });  // never "undefined"
+    $("loadHint").textContent = `${pool.length} Fragen an Bord.`;
+    renderLineup();
+  }).catch(() => { $("loadHint").textContent = "Server nicht erreichbar: uv run python frontend/server.py"; });
+
+  const modelOf = (p) => p.human ? "Mensch" : (AGENTS[p.agent]?.model || p.agent || "?");
+  const kindBadge = (p) => p.human ? `<span class="kind human">👤 Mensch</span>` : `<span class="kind ai">🤖 KI · ${escapeHtml(modelOf(p))}</span>`;
+  const playerName = (p) => p.human ? humanName : CHARACTERS[p.char].name;
+
+  function renderLineup() {
+    $("lineup").innerHTML = AI().map(p => `
+      <div class="fighter" style="--c:${p.color}">
+        <div class="frame">${portrait(p.char)}</div>
+        <div><div class="who">${CHARACTERS[p.char].name}</div>
+          <select data-player="${p.id}" aria-label="Modell für ${CHARACTERS[p.char].name}">${Object.entries(AGENTS).map(([k, a]) =>
+            `<option value="${k}" ${k === p.agent ? "selected" : ""}>${escapeHtml(a.label)}${a.live ? " (live)" : ""}</option>`).join("")}</select>
+          <div class="role">${escapeHtml(AGENTS[p.agent]?.note || "")}</div>
+        </div>
+      </div>`).join("");
+    $("lineup").querySelectorAll("select").forEach(sel => sel.addEventListener("change", () => {
+      PLAYERS.find(p => p.id === sel.dataset.player).agent = sel.value;
+      renderLineup();
+    }));
+  }
+
+  // ── sound: ElevenLabs files from frontend/make_sounds.sh; until they exist, a Web Audio synth stands in ──
+  let soundOn = true, music = null, ctx = null, drone = null;
+  try { soundOn = localStorage.getItem("vinland-sound") !== "off"; } catch {}
+  const audioCtx = () => (ctx = ctx || new (window.AudioContext || window.webkitAudioContext)());
+  function tone(type, freqs, dur, vol, at = 0, filter = 0) {  // freqs: [start, end]
+    const c = audioCtx(), t = c.currentTime + at, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(freqs[0], t); o.frequency.exponentialRampToValueAtTime(freqs[1] || freqs[0], t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + Math.min(.06, dur / 4)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    let node = o.connect(g);
+    if (filter) { const f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = filter; g.connect(f); node = f; }
+    node.connect(c.destination); o.start(t); o.stop(t + dur + .05);
+  }
+  function noise(dur, vol, at = 0, band = 1000) {
+    const c = audioCtx(), t = c.currentTime + at, buf = c.createBuffer(1, c.sampleRate * dur, c.sampleRate);
+    const d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    src.buffer = buf; f.type = "bandpass"; f.frequency.value = band; f.Q.value = .8;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f).connect(g).connect(c.destination); src.start(t);
+  }
+  const drum = (at = 0, v = .5) => { tone("sine", [120, 45], .45, v, at); noise(.12, v * .5, at, 300); };
+  const SYNTH = {
+    horn: () => { tone("sawtooth", [98, 110], 1.6, .18, 0, 700); tone("sawtooth", [147, 165], 1.6, .1, .05, 900); },
+    drum: () => { drum(0, .6); drum(.18, .35); },
+    reveal: () => { [1300, 1950, 2700].forEach((f, i) => tone("sine", [f * 1.4, f], .9, .08 / (i + 1), 0)); noise(.25, .15, 0, 4000); },
+    cheer: () => { noise(1.4, .35, 0, 1100); noise(1.2, .25, .1, 2200); [262, 330, 392, 523].forEach((f, i) => tone("triangle", [f], .35, .12, i * .1)); },
+    groan: () => { tone("sawtooth", [220, 110], .9, .12, 0, 600); tone("sawtooth", [233, 116], .9, .08, .05, 500); },
+    victory: () => { [0, .25, .5].forEach(t => drum(t, .6)); [392, 523, 659, 784].forEach((f, i) => tone("triangle", [f], .45, .16, .75 + i * .16)); tone("sawtooth", [98, 110], 2, .14, .75, 800); noise(2, .3, .9, 1200); },
+  };
+  let haveFiles = false;  // probe once: are the ElevenLabs files there? If not, synth right away (no 404 delay)
+  fetch("sounds/music.mp3", { method: "HEAD" }).then(r => { haveFiles = r.ok; }).catch(() => {});
+  function sound(name, volume = .8) {
+    if (!soundOn) return;
+    if (!haveFiles) { try { SYNTH[name] && SYNTH[name](); } catch {} return; }
+    const a = new Audio(`sounds/${name}.mp3`);
+    a.volume = volume;
+    a.play().catch(() => { try { SYNTH[name] && SYNTH[name](); } catch {} });
+  }
+  function startDrone() {  // stand-in background music: low drone plus a slow war-drum pattern
+    if (drone) return;
+    const c = audioCtx(), g = c.createGain(), f = c.createBiquadFilter();
+    g.gain.value = .035; f.type = "lowpass"; f.frequency.value = 380; f.connect(g).connect(c.destination);
+    const oscs = [55, 82.4, 110.6].map(fr => { const o = c.createOscillator(); o.type = "sawtooth"; o.frequency.value = fr; o.connect(f); o.start(); return o; });
+    let beat = 0;
+    const timer = setInterval(() => { if (beat % 4 !== 3) drum(0, beat % 4 === 0 ? .22 : .12); beat++; }, 600);
+    drone = { stop: () => { clearInterval(timer); oscs.forEach(o => o.stop()); drone = null; } };
+  }
+  function startMusic() {
+    if (!soundOn) return;
+    audioCtx().resume();  // inside the click: unlocks audio under browser autoplay rules
+    if (!haveFiles) return startDrone();
+    if (!music) { music = new Audio("sounds/music.mp3"); music.loop = true; music.volume = .22; }
+    music.play().catch(() => startDrone());
+  }
+  function stopMusic() { if (music) music.pause(); if (drone) drone.stop(); }
+  function renderSoundBtn() {
+    $("soundBtn").setAttribute("aria-pressed", String(soundOn));
+    $("soundBtn").textContent = soundOn ? "🔊 Sound an" : "🔇 Sound aus";
+  }
+  $("soundBtn").addEventListener("click", () => {
+    soundOn = !soundOn;
+    try { localStorage.setItem("vinland-sound", soundOn ? "on" : "off"); } catch {}
+    if (soundOn && !$("quiz").hidden) startMusic(); else if (!soundOn) stopMusic();
+    renderSoundBtn();
+  });
+  renderSoundBtn();
+
+  document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", "false"));
+    b.setAttribute("aria-pressed", "true");
+    rounds = +b.dataset.n;
+  }));
+  $("start").addEventListener("click", start);
+  $("again").addEventListener("click", () => { stopMusic(); $("result").hidden = true; $("setup").hidden = false; $("records").hidden = true; setHost("neutral"); });
+  $("reveal").addEventListener("click", reveal);
+  $("next").addEventListener("click", next);
+  document.addEventListener("keydown", (e) => {
+    if ($("quiz").hidden || !current || e.target.tagName === "INPUT") return;
+    const k = e.key.toUpperCase();
+    const i = LETTERS.indexOf(k) >= 0 ? LETTERS.indexOf(k) : ["1", "2", "3", "4"].indexOf(k);
+    if (i >= 0 && !current.revealed) pick(LETTERS[i]);
+    if (e.key === "Enter") { if (!$("next").hidden) next(); else if (!$("reveal").disabled) reveal(); }
+  });
+
+  function start() {
+    if (!pool.length) return;
+    round = [...pool].sort(() => Math.random() - .5).slice(0, rounds);
+    idx = 0; history = [];
+    $("setup").hidden = true; $("result").hidden = true; $("quiz").hidden = false;
+    startMusic(); sound("horn", .7);
+    renderRecords();
+    show();
+  }
+
+  function stats(p) {
+    const rows = history.map(h => h.answers[p.id]);
+    const correct = history.filter(h => h.answers[p.id].letter === h.q.answer).length;
+    const tokens = rows.reduce((s, a) => s + (a.tokens || 0), 0);
+    const timed = rows.filter(a => a.seconds);
+    const avg = timed.length ? timed.reduce((s, a) => s + a.seconds, 0) / timed.length : 0;
+    return { correct, tokens, avg };
+  }
+  // Leaderboard rules: most correct, then fewest tokens, then fastest. The human has no tokens/time and
+  // ranks after AI players with the same score.
+  function ranking() {
+    return PLAYERS.map(p => ({ p, ...stats(p) }))
+      .sort((x, y) => y.correct - x.correct || (x.p.human - y.p.human) || x.tokens - y.tokens || x.avg - y.avg);
+  }
+
+  function renderRecords() {
+    $("records").hidden = false;
+    if (!history.length) {
+      $("records").innerHTML = `<div class="record"><span class="rk">🏆 Führt</span><span class="rv">noch offen</span></div>
+        <div class="record"><span class="rk">🪙 Günstigste KI</span><span class="rv">noch offen</span></div>
+        <div class="record"><span class="rk">⚡ Schnellste KI</span><span class="rv">noch offen</span></div>`;
+      return;
+    }
+    const rows = ranking();
+    const ai = rows.filter(r => !r.p.human);
+    const cheapest = [...ai].sort((x, y) => x.tokens - y.tokens || y.correct - x.correct)[0];
+    const fastest = [...ai].filter(r => r.avg).sort((x, y) => x.avg - y.avg)[0] || ai[0];
+    const cell = (label, r, value) => `<div class="record" style="--c:${r.p.color}">
+      <div class="frame">${portrait(r.p.char, "happy")}</div>
+      <div><span class="rk">${label}</span><span class="rv">${escapeHtml(modelOf(r.p))}</span>
+      <span class="rs">${escapeHtml(playerName(r.p))} · ${value}</span></div></div>`;
+    $("records").innerHTML = cell("🏆 Führt", rows[0], `${rows[0].correct}/${history.length} richtig${rows[0].p.human ? "" : ` · ${rows[0].tokens} Tok`}`)
+      + cell("🪙 Günstigste KI", cheapest, `${cheapest.tokens} Tok · ${cheapest.correct} richtig`)
+      + cell("⚡ Schnellste KI", fastest, `Ø ${fastest.avg.toFixed(1)} s · ${fastest.correct} richtig`);
+  }
+
+  function renderArena(says = {}) {
+    $("arena").innerHTML = PLAYERS.map(p => {
+      const st = stats(p);
+      const line = p.human ? `${st.correct} richtig`
+        : `${st.correct} richtig · ${st.tokens.toLocaleString("de-DE")} Tok · Ø ${st.avg ? st.avg.toFixed(1) + " s" : "–"}`;
+      const s = says[p.id] || {};
+      return `<div class="fighter ${s.win ? "win" : ""} ${p.human ? "is-human" : ""}" style="--c:${p.color}">
+        <div class="frame">${portrait(p.char, s.mood || "neutral")}</div>
+        <div>${kindBadge(p)}<div class="who">${escapeHtml(playerName(p))}</div>
+          ${p.human ? `<div class="role">spielt als ${CHARACTERS[p.char].name}</div>` : ""}<div class="score">${line}</div></div>
+        <div class="say">${s.html || ""}</div></div>`;
+    }).join("");
+  }
+
+  function show() {
+    const q = round[idx];
+    if (idx > 0) sound("drum", .6);
+    current = { q, human: null, agents: {}, revealed: false, startedAt: performance.now() };
+    $("hostSay").textContent = `Frage ${idx + 1}! ` + pickOne(["Bei meiner Krone, beantwortet mir dies:", "Hört, Krieger des Wissens!", "Wer das weiß, segelt nach Vinland!", "Schärft eure Äxte… und euren Verstand!"]);
+    $("hostSay").className = "bubble left"; setHost("neutral");
+    $("qNum").textContent = `Frage ${idx + 1}/${round.length}`;
+    $("bar").style.width = (idx / round.length * 100) + "%";
+    $("qText").textContent = q.question;
+    $("opts").innerHTML = "";
+    q.options.forEach((o, i) => {
+      const b = document.createElement("button");
+      b.className = "opt"; b.dataset.l = LETTERS[i];
+      b.innerHTML = `<span class="l">${LETTERS[i]}</span><span></span><span class="tags"></span>`;
+      b.children[1].textContent = o;
+      b.addEventListener("click", () => pick(LETTERS[i]));
+      $("opts").appendChild(b);
+    });
+    $("next").hidden = true; $("reveal").disabled = true;
+    clearInterval(tick);
+    tick = setInterval(() => { $("qTimer").textContent = ((performance.now() - current.startedAt) / 1000).toFixed(1) + " s"; }, 100);
+    current.says = { human: { html: `<span class="bubble up">Du bist dran: A–D!</span>` } };
+    AI().forEach(p => {
+      current.says[p.id] = { html: `<span class="bubble up"><span class="spinner"></span>überlegt…</span>` };
+      askAgent(current, p);
+    });
+    renderArena(current.says);
+    updateWaiting();
+  }
+
+  function updateWaiting() {
+    const open = AI().filter(p => !current.agents[p.id]).length;
+    $("waiting").textContent = open ? `${8 - open}/8 KI-Antworten da…` : "Alle 8 KIs haben geantwortet.";
+    $("reveal").disabled = open > 0;
+  }
+
+  function pick(letter) {
+    if (current.revealed) return;
+    current.human = letter;
+    document.querySelectorAll(".opt").forEach(b => b.classList.toggle("picked", b.dataset.l === letter));
+    current.says.human = { html: `<span class="bubble up">Ich nehme ${letter}!</span>` };
+    renderArena(current.says);
+  }
+
+  async function askAgent(state, p) {
+    let answer;
+    try {
+      const res = await fetch("/api/ask", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agent: p.agent, question: state.q.question, options: state.q.options }) });
+      const data = await res.json();
+      answer = res.ok ? data : { error: data.error || "Fehler", seconds: data.seconds };
+    } catch (err) {
+      answer = { error: String(err) };
+    }
+    state.agents[p.id] = answer;
+    if (state !== current) return;
+    current.says[p.id] = { html: answer.error ? `<span class="bubble up">Schiff gesunken (Fehler)</span>`
+      : `<span class="bubble up">Antwort steht. ⚑</span>` };
+    renderArena(current.says);
+    updateWaiting();
+  }
+
+  function reveal() {
+    if (current.revealed) return;
+    current.revealed = true;
+    clearInterval(tick);
+    const { q } = current;
+    const answers = { human: { letter: current.human, tokens: 0, seconds: 0 } };
+    AI().forEach(p => {
+      const a = current.agents[p.id] || { error: "keine Antwort" };
+      answers[p.id] = { letter: a.letter || null, reply: a.reply, error: a.error, tokens: a.error ? 0 : (a.tokens || 0), seconds: a.seconds || 0 };
+    });
+    document.querySelectorAll(".opt").forEach(b => {
+      b.disabled = true;
+      const l = b.dataset.l;
+      const by = PLAYERS.filter(p => answers[p.id].letter === l);
+      if (l === q.answer) b.classList.add("correct");
+      else if (by.length) b.classList.add("wrong");
+      b.querySelector(".tags").innerHTML = by.map(p =>
+        `<span class="tag" style="background:${p.color}" title="${escapeHtml(playerName(p))} · ${escapeHtml(modelOf(p))}">${p.human ? "👤" : escapeHtml(CHARACTERS[p.char].short)}</span>`).join("");
+    });
+    const says = {};
+    PLAYERS.forEach(p => {
+      const a = answers[p.id];
+      const right = a.letter === q.answer;
+      let text;
+      if (a.error) text = "Schiff gesunken… (Fehler)";
+      else if (!p.human && !a.letter) text = `„${(a.reply || "").slice(0, 24)}“: mehr als ein Buchstabe, ungültig!`;
+      else if (!a.letter) text = "Ich habe nichts gesagt…";
+      else text = right ? pickOne(["Skål!", "Für Vinland!", "Wie ein Speer ins Ziel!", "Odin ist mit mir!"])
+        : pickOne(["Bei Odins Bart…", "Verflucht!", "Das Meer ist rau heute…", "Thor, warum?!"]);
+      const pills = p.human ? "" : (a.error ? `<span class="pill err">Fehler</span>`
+        : `${a.tokens === 0 ? `<span class="pill zero">0 Tok · Solver</span>` : `<span class="pill">${a.tokens} Tok</span>`}<span class="pill">${a.seconds.toFixed(1)} s</span><span class="pill">${a.letter || "–"}</span>`);
+      says[p.id] = { mood: right ? "happy" : "sad", win: right, html: `<span class="bubble up ${right ? "shout" : ""}">${escapeHtml(text)}</span><br>${pills}` };
+    });
+    history.push({ q, answers });
+    sound("reveal", .55);
+    const winners = PLAYERS.filter(p => answers[p.id].letter === q.answer).length;
+    setTimeout(() => sound(winners ? "cheer" : "groan", .8), 450);
+    renderArena(says);
+    renderRecords();
+    $("hostSay").textContent = `Die Antwort ist ${q.answer}: ${q.options[LETTERS.indexOf(q.answer)]}! `
+      + (winners === PLAYERS.length ? "Alle neun, beeindruckend!" : winners === 0 ? "Keiner?! Schande über euch alle!" : `${winners} von ${PLAYERS.length} lagen richtig.`);
+    $("hostSay").className = "bubble left shout"; setHost(winners ? "happy" : "sad");
+    $("reveal").disabled = true;
+    $("waiting").textContent = "";
+    $("next").hidden = false;
+    $("next").textContent = idx + 1 < round.length ? "Nächste Frage" : "Zum Ergebnis";
+  }
+
+  function next() {
+    idx += 1;
+    if (idx < round.length) return show();
+    $("bar").style.width = "100%";
+    finish();
+  }
+
+  function finish() {
+    $("quiz").hidden = true; $("result").hidden = false;
+    sound("victory", .9);
+    const ranked = ranking();
+    const top = ranked[0];
+    $("verdict").textContent = top.p.human ? `Skål! ${humanName} besiegt die Maschinen!`
+      : `${CHARACTERS[top.p.char].name} mit ${modelOf(top.p)} erobert Vinland!`;
+    setHost("happy");
+    renderRecords();
+    $("podium").innerHTML = ranked.map((r, i) => `
+      <div class="fighter ${i === 0 ? "win" : ""} ${r.p.human ? "is-human" : ""}" style="--c:${r.p.color}">
+        <div class="frame">${portrait(r.p.char, i === 0 ? "happy" : "neutral")}</div>
+        <div><div class="rank">#${i + 1}</div>${kindBadge(r.p)}<div class="who">${escapeHtml(playerName(r.p))}</div>
+          <div class="score">${r.correct}/${history.length} richtig${r.p.human ? "" : ` · ${r.tokens} Tok · Ø ${r.avg.toFixed(1)} s`}</div></div>
+      </div>`).join("");
+    $("thead").innerHTML = `<tr><th>#</th><th>Frage</th><th>Lösung</th>${PLAYERS.map(p =>
+      `<th title="${escapeHtml(modelOf(p))}">${p.human ? "👤" : escapeHtml(modelOf(p))}</th>`).join("")}</tr>`;
+    $("rows").innerHTML = history.map((h, i) => `<tr><td>${i + 1}</td><td>${escapeHtml(h.q.question)}</td><td>${h.q.answer}</td>
+      ${PLAYERS.map(p => { const a = h.answers[p.id]; return `<td class="${a.letter === h.q.answer ? "ok" : "bad"}" title="${a.tokens || 0} Tok">${a.letter || (a.error ? "!" : "–")}</td>`; }).join("")}</tr>`).join("");
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+})();
+</script>
+</body>
+</html>

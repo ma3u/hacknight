@@ -6,6 +6,7 @@ Prints accuracy, total tokens and latency per variant; saves details to evals/re
 
 import json
 import os
+import random
 import re
 import subprocess
 import sys
@@ -20,6 +21,8 @@ from check import format_question, last_reply, tokens_used  # noqa: E402
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 QUESTIONS = json.loads((HERE / os.environ.get("QZ_SET", "questions.json")).read_text())
+if os.environ.get("QZ_SAMPLE"):  # fixed random subset, identical for every variant
+    QUESTIONS = random.Random(7).sample(QUESTIONS, int(os.environ["QZ_SAMPLE"]))
 
 BASE_PROMPT = (
     "You answer multiple-choice quiz questions. Each question has options A, B, C and D. "
@@ -73,6 +76,20 @@ VARIANTS = {
                               kwargs={"reasoning_effort": "low", "max_completion_tokens": 2000}, steps=1),
     "v9b_gpt54mini_low_tiny": dict(model="gpt-5.4-mini", prompt="Letter only.", tools="",
                                    kwargs={"reasoning_effort": "low", "max_completion_tokens": 2000}, steps=1),
+    # p1: the shipped agent.py pipeline (QuickAnswer -> Agent gpt-5.4 low -> BranchJoiner)
+    "p1_pipeline": dict(target="agent.py"),
+    # luna: the gpt-5.6-luna fork from the platform, same pipeline as agent.py
+    "luna_fork": dict(target="evals/pipeline_variant.py", model="gpt-5.6-luna", prompt="", kwargs={}),
+    "luna_tuned": dict(target="evals/pipeline_variant.py", model="gpt-5.6-luna", prompt=SHORT_PROMPT,
+                       kwargs={"reasoning_effort": "low", "max_completion_tokens": 1000}),
+    # p8_*: eight models in the deployed pipeline, each with its best settings
+    **{f"p8_{m}": dict(target="evals/pipeline_variant.py", model=m, prompt=SHORT_PROMPT,
+                       kwargs={"reasoning_effort": "low", "max_completion_tokens": 1000})
+       for m in ("gpt-5.6-luna", "gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano", "gpt-5.1", "gpt-5-mini")},
+    **{f"p8_{m}": dict(target="evals/pipeline_variant.py", model=m, prompt=SHORT_PROMPT,
+                       kwargs={"max_completion_tokens": 1, "temperature": 0,
+                               "logit_bias": {"32": 100, "33": 100, "34": 100, "35": 100}})
+       for m in ("gpt-4.1", "gpt-4o-mini")},
     # v5: gpt-5.1, only count_letter tool (letter counting is where LLMs slip)
     "v5_gpt51_lettertool": dict(model="gpt-5.1", prompt=SHORT_PROMPT, tools="count_letter",
                                 kwargs=NO_REASON, steps=2),
@@ -80,26 +97,27 @@ VARIANTS = {
 
 
 def run_one(variant: dict, q):
-    question, options, answer = q
-    env = dict(os.environ, QZ_MODEL=variant["model"], QZ_PROMPT=variant.get("prompt", ""),
+    question, options, answer = q[:3]
+    extra = dict(category=q[3], difficulty=q[4]) if len(q) > 4 else {}
+    env = dict(os.environ, QZ_MODEL=variant.get("model", ""), QZ_PROMPT=variant.get("prompt", ""),
                QZ_TOOLS=variant.get("tools", ""), QZ_KWARGS=json.dumps(variant.get("kwargs", {})),
                QZ_STEPS=str(variant.get("steps", 3)))
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "r.json"
         start = time.monotonic()
         run = subprocess.run(
-            ["haystack-enterprise", "run", str(HERE / "agent_variant.py"), "--io-config", str(ROOT / "agent.io.yaml"),
+            ["haystack-enterprise", "run", str(ROOT / variant["target"]) if "target" in variant else str(HERE / "agent_variant.py"), "--io-config", str(ROOT / variant.get("io", "agent.io.yaml" if "target" in variant else "evals/agent_variant.io.yaml")),
              "--python", str(ROOT / ".venv/bin/python"), "--query", format_question(question, options),
              "--output", str(out)],
             capture_output=True, text=True, env=env, cwd=ROOT,
         )
         secs = time.monotonic() - start
         if run.returncode != 0 or not out.exists():
-            return dict(q=question, answer=answer, reply=None, ok=False, tokens=0, secs=secs,
+            return dict(q=question, answer=answer, reply=None, ok=False, tokens=0, secs=secs, **extra,
                         error=(run.stdout + run.stderr)[-600:])
         result = json.loads(out.read_text())
     reply = last_reply(result).strip()
-    return dict(q=question, answer=answer, reply=reply, ok=bool(re.fullmatch(r"[ABCD]", reply)) and reply == answer,
+    return dict(q=question, answer=answer, reply=reply, **extra, ok=bool(re.fullmatch(r"[ABCD]", reply)) and reply == answer,
                 tokens=tokens_used(result), secs=secs)
 
 
@@ -107,7 +125,7 @@ def main(names):
     (HERE / "results").mkdir(exist_ok=True)
     for name in names:
         variant = VARIANTS[name]
-        with ThreadPoolExecutor(max_workers=10) as pool:
+        with ThreadPoolExecutor(max_workers=int(os.environ.get("QZ_WORKERS", "10"))) as pool:
             rows = list(pool.map(lambda q: run_one(variant, q), QUESTIONS))
         (HERE / "results" / f"{name}{os.environ.get('QZ_TAG', '')}.json").write_text(json.dumps(rows, indent=1))
         correct = sum(r["ok"] for r in rows)

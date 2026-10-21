@@ -1,0 +1,28 @@
+@startuml live-question
+!theme plain
+skinparam shadowing false
+title Live-Quiz · eine Frage an den Service "quiz"
+
+participant "Quiz-Host" as Host
+participant "Gateway\nService quiz" as GW
+participant "QuickAnswer" as QA
+participant "Agent\n(gpt-5.4-mini)" as Agent
+participant "OpenAI" as OAI
+participant "BranchJoiner" as Join
+
+Host -> GW : POST /chat/completions\n"Frage\nA) …\nB) …\nC) …\nD) …"
+GW -> QA : messages
+alt berechenbar (Buchstaben zählen, Arithmetik)\nund genau eine Option passt
+  QA -> QA : solve() in Python
+  QA -> Join : answered = [..., "B"]
+  note right of QA : 0 Tokens, Millisekunden
+else alles andere
+  QA -> Agent : unanswered = messages
+  Agent -> OAI : system "Reply with only the correct option letter."\nreasoning_effort=low, include_usage
+  OAI --> Agent : "B" (~45 Tokens Wissen, bis ~150 Textaufgabe)
+  Agent -> Join : messages + "B"
+end
+Join --> GW : value
+GW --> Host : "B" + usage
+note over Host : Wertung: richtig → Tokens → Zeit\n(15 s Limit, Kaltstart vorher aufwärmen!)
+@enduml
