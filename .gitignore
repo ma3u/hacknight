@@ -6,3 +6,4 @@ evals/results/
 frontend/sounds/tts/
 site/
 video/out/
+.DS_Store
