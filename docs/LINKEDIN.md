@@ -1,7 +1,9 @@
-# LinkedIn-Post · deepset Haystack Enterprise Hack Night
+# LinkedIn post · deepset Haystack Enterprise Hack Night
 
-Veröffentlicht von Matthias Buchhorn-Roth am Morgen nach der Hack Night (22. Oktober 2026).
-Dazu passend: das Video aus [`video/`](../video/SCREENPLAY.md) und das Online-Quiz unter
+Published by Matthias Buchhorn-Roth the morning after the Hack Night (October 22, 2026):
+**[read the post on LinkedIn](https://www.linkedin.com/feed/update/urn:li:activity:7518778597650673665/)**
+
+Related: the video in [`video/`](../video/SCREENPLAY.md) and the online quiz at
 [ma3u.github.io/hacknight](https://ma3u.github.io/hacknight/).
 
 ---
@@ -38,14 +40,14 @@ evening, great mentors and good food.
 
 ---
 
-## Was seitdem passiert ist
+## What happened since
 
-„The Vikings will sail again“: Die Gewinner-Strategien aus dem Post sind inzwischen nachgebaut und gemessen
-(Details in [`IMPROVEMENTS.md`](IMPROVEMENTS.md), Abschnitt 4, und [`STRATEGY.md`](STRATEGY.md), Abschnitt 5.4):
+"The Vikings will sail again": the winners' strategies from the post have since been rebuilt and measured
+(details in [`IMPROVEMENTS.md`](IMPROVEMENTS.md), stage 4, and [`STRATEGY.md`](STRATEGY.md), section 5.4):
 
-- **Websuche (Takeaway 2):** Ein Router schickt Fragen zu aktuellen Ereignissen an einen Agent mit OpenAI-Websuche.
-  Auf 14 belegten Fragen zu Juli–Oktober 2026: 14/14 statt 4/14, normale Fragen bleiben schlank.
-- **Größtes Modell (Takeaway 1):** GPT-6 Astra kennt 7 der 14 aktuellen Ereignisse und ist bei normalen Fragen
-  genauso genau, wird mit Websuche aber zu langsam fürs 15-Sekunden-Limit. Gewählt: gpt-5.4-mini mit Suche.
-- **Evaluation (Takeaway 3):** Ohne den Blick in die Agent-Nachrichten hätten wir eine kaputte Suche (HTTP 403)
-  für „Suche bringt wenig“ gehalten.
+- **Web search (takeaway 2):** a router sends questions about recent events to an agent with OpenAI web search.
+  On 14 sourced questions about July–October 2026: 14/14 instead of 4/14, while normal questions stay lean.
+- **Biggest model (takeaway 1):** GPT-6 Astra knows 7 of the 14 recent events and is just as accurate on normal
+  questions, but with web search it's too slow for the 15-second limit. Chosen: gpt-5.4-mini with search.
+- **Evaluation (takeaway 3):** without looking at the agent's messages we would have mistaken a broken search
+  (HTTP 403) for "search doesn't help much".

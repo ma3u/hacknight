@@ -1,11 +1,11 @@
-# 1000 Pub-Quiz-Fragen
+# 1,000 pub quiz questions
 
-Quelle: [The Trivia API](https://the-trivia-api.com) (CC BY-NC 4.0). Maschinenlesbar: [`questions_trivia.json`](questions_trivia.json).
+Source: [The Trivia API](https://the-trivia-api.com) (CC BY-NC 4.0). Machine-readable: [`questions_trivia.json`](questions_trivia.json).
 
-**Schwierigkeit:** hard 473, medium 417, easy 110  
-**Kategorien:** science 143, music 131, film_and_tv 129, society_and_culture 118, geography 110, arts_and_literature 101, history 99, food_and_drink 77, sport_and_leisure 61, general_knowledge 31
+**Difficulty:** hard 473, medium 417, easy 110  
+**Categories:** science 143, music 131, film_and_tv 129, society_and_culture 118, geography 110, arts_and_literature 101, history 99, food_and_drink 77, sport_and_leisure 61, general_knowledge 31
 
-| # | Kategorie | Stufe | Frage | A | B | C | D | Lösung |
+| # | Category | Difficulty | Question | A | B | C | D | Answer |
 |---|---|---|---|---|---|---|---|---|
 | 1 | sport_and_leisure | hard | Which sport is associated with The FINA World Championships? | Sailing | American Football | Tennis | Swimming | **D** |
 | 2 | science | easy | What do you call an animal that is active only at night? | matutinal | diurnal | nocturnal | crepuscular | **C** |

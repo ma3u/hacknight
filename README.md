@@ -10,7 +10,8 @@
 >   **All agents compared:** [`evals/RESULTS.md`](evals/RESULTS.md) ·
 >   **1,000 quiz questions:** [`evals/trivia/QUESTIONS.md`](evals/trivia/QUESTIONS.md)
 > - **Play it:** [ma3u.github.io/hacknight](https://ma3u.github.io/hacknight/), one human vs. ten AI agents ·
->   **Video:** [`video/SCREENPLAY.md`](video/SCREENPLAY.md) · **LinkedIn post:** [`docs/LINKEDIN.md`](docs/LINKEDIN.md)
+>   **Video:** [`video/SCREENPLAY.md`](video/SCREENPLAY.md) · **LinkedIn post:**
+>   [on LinkedIn](https://www.linkedin.com/feed/update/urn:li:activity:7518778597650673665/) ([`docs/LINKEDIN.md`](docs/LINKEDIN.md))
 >
 > The original challenge description follows below.
 

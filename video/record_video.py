@@ -41,11 +41,11 @@ HUMAN = "Opus 5.5"
 
 # The screenplay: per question, the caption shown and the answer Opus 5.5 gives as the human player.
 SCENES = [
-    ("Szene 1 · Rechenfrage: der Solver rechnet in Python. 0 Tokens, kein LLM-Aufruf.", "b"),
-    ("Szene 2 · Textaufgabe: hier trennt sich die Spreu vom Weizen.", "c"),
-    ("Szene 3 · Musikwissen: selbst große Modelle greifen daneben.", "c"),
-    ("Szene 4 · Datumsrechnung: wer denkt kurz nach?", "b"),
-    ("Szene 5 · Filmwissen zum Finale.", "d"),
+    ("Scene 1 · Arithmetic: the solver computes it in Python. 0 tokens, no LLM call.", "b"),
+    ("Scene 2 · Word problem: this is where the models split.", "c"),
+    ("Scene 3 · Music knowledge: even big models miss.", "c"),
+    ("Scene 4 · Date arithmetic: who thinks for a moment?", "b"),
+    ("Scene 5 · Film knowledge for the finale.", "d"),
 ]
 
 OVERLAY = """
@@ -125,13 +125,13 @@ async def record() -> tuple[Path, list, float, float]:
         await page.wait_for_function("document.querySelectorAll('#lineup .fighter').length === 8")
         await page.evaluate(OVERLAY)
         await page.evaluate("""recCard(`<div class="kick">deepset Hacknight · Haystack Enterprise</div>
-            <h1>Vinland Pub Quiz</h1><div class="sub">1 Mensch gegen 8 KI-Modelle</div>
-            <div class="small">Den Menschen spielt Claude Opus 5.5 · Team Vinland</div>`, true)""")
+            <h1>Vinland Pub Quiz</h1><div class="sub">1 human vs. AI agents</div>
+            <div class="small">The human is played by Claude Opus 5.5 · Team Vinland</div>`, true)""")
         await page.wait_for_timeout(300)
         await cdp.send("Page.startScreencast", {"format": "jpeg", "quality": 92, "maxWidth": SIZE["width"], "maxHeight": SIZE["height"]})
         await page.wait_for_timeout(4000)
         await page.evaluate("recCard(null, false)")
-        await page.evaluate("recCaption('Gleiche Haystack-Pipeline für alle: QuickAnswer-Solver → Agent → BranchJoiner')")
+        await page.evaluate("recCaption('Same Haystack pipeline for all: QuickAnswer solver → agent → BranchJoiner')")
         await page.wait_for_timeout(3500)
         await page.evaluate("recCaption('')")
         await page.click("#start")
@@ -153,14 +153,14 @@ async def record() -> tuple[Path, list, float, float]:
             await page.wait_for_timeout(600)
 
         await page.evaluate("window.scrollTo({ top: 0, behavior: 'smooth' })")
-        await page.evaluate("recCaption('Sieger nach „genau, dann schnell“: gpt-5.4-mini · 99,6 % · 3,0 s, live im Service quiz')")
+        await page.evaluate("t => recCaption(t)", 'Winner under "accurate, then fast": gpt-5.4-mini · 99.6 % · 3.0 s, live in the quiz service')
         await page.wait_for_timeout(4500)
         await page.evaluate("document.getElementById('podium').scrollIntoView({ behavior: 'smooth', block: 'start' })")
         await page.wait_for_timeout(2500)
         await page.evaluate("recCaption('')")
         await page.evaluate("""recCard(`<div class="kick">Team Vinland</div><h1>Skål!</h1>
-            <div class="sub">Gebaut mit Haystack Enterprise, 8 OpenAI-Modellen und ElevenLabs</div>
-            <div class="small">Selbst spielen: ma3u.github.io/hacknight<br>Code: github.com/ma3u/hacknight</div>`, true)""")
+            <div class="sub">Built with Haystack Enterprise, OpenAI models and ElevenLabs</div>
+            <div class="small">Play it: ma3u.github.io/hacknight<br>Code: github.com/ma3u/hacknight</div>`, true)""")
         await page.wait_for_timeout(5000)
         end_ts = time.time()
         await cdp.send("Page.stopScreencast")

@@ -33,15 +33,15 @@ EFFECTS = {
     "victory": ("Huge Viking village victory feast: crowd chanting and stomping in rhythm, war horns and drums, roaring celebration", 7),
 }
 VOICES = {
-    "knut_start": (KNUT, "Hört mich an, Krieger von Vinland! Das Quiz beginnt. Möge Odin euren Verstand schärfen!"),
-    "knut_right": (KNUT, "Richtig! Skål!"),
-    "knut_some": (KNUT, "Einige von euch wissen es. Die anderen rudern morgen."),
-    "knut_nobody": (KNUT, "Keiner?! Schande über euch alle!"),
-    "knut_victory": (KNUT, "Vinland ist erobert! Feiert, Wikinger, der Met fließt heute Nacht!"),
-    "warrior_win": (WARRIOR, "Skål! Für Vinland!"),
-    "warrior_lose": (WARRIOR, "Bei Odins Bart… verflucht!"),
-    "shieldmaiden_win": (SHIELDMAIDEN, "Wie ein Speer ins Ziel!"),
-    "shieldmaiden_lose": (SHIELDMAIDEN, "Thor, warum?!"),
+    "knut_start": (KNUT, "Hear me, warriors of Vinland! The quiz begins. May Odin sharpen your minds!"),
+    "knut_right": (KNUT, "Correct! Skål!"),
+    "knut_some": (KNUT, "Some of you know it. The others row tomorrow."),
+    "knut_nobody": (KNUT, "Nobody?! Shame on you all!"),
+    "knut_victory": (KNUT, "Vinland is conquered! Celebrate, Vikings, the mead flows tonight!"),
+    "warrior_win": (WARRIOR, "Skål! For Vinland!"),
+    "warrior_lose": (WARRIOR, "By Odin's beard… cursed!"),
+    "shieldmaiden_win": (SHIELDMAIDEN, "Straight as a spear!"),
+    "shieldmaiden_lose": (SHIELDMAIDEN, "Thor, why?!"),
 }
 
 

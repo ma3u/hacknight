@@ -1,63 +1,63 @@
-# Team Vinland · Verbesserungen im Überblick
+# Team Vinland · Improvements at a glance
 
-Vom Starter-Agent der deepset Hack Night (21. Oktober 2026, NVIDIA GTC Berlin, „House of Sovereignty“) bis zum
-Agent mit Websuche. Jede Stufe wurde mit [`evals/run_eval.py`](../evals/run_eval.py) gemessen und nur übernommen,
-wenn die Genauigkeit nicht sank. Details und Diagramme: [`STRATEGY.md`](STRATEGY.md), Tabelle aller Agents:
+From the starter agent of the deepset Hack Night (October 21, 2026, NVIDIA GTC Berlin, "House of Sovereignty") to the
+agent with web search. Every stage was measured with [`evals/run_eval.py`](../evals/run_eval.py) and only kept if
+accuracy didn't drop. Details and diagrams: [`STRATEGY.md`](STRATEGY.md); all agents compared:
 [`evals/RESULTS.md`](../evals/RESULTS.md).
 
-## Der Weg des Agents
+## The agent's path
 
-| Stufe | Was sich geändert hat | Genauigkeit | Tokens/Frage | Commit |
+| Stage | What changed | Accuracy | Tokens/question | Commit |
 |---|---|---|---|---|
-| 0 · Starter | gpt-5.1 mit Tools `calculate` und `count_letter`, langer Prompt | 39/40 | 460 | [`856ec43`](https://github.com/ma3u/hacknight/commit/856ec43) |
-| 1 · Weniger senden | gpt-5.4, keine Tools, `reasoning_effort: low`, Prompt mit 7 Wörtern | 60/60 | 66–82 | [`aaa8ee8`](https://github.com/ma3u/hacknight/commit/aaa8ee8) |
-| 2 · Python statt LLM | `QuickAnswer`-Komponente löst Rechen- und Zählfragen mit 0 Tokens; Pipeline mit `BranchJoiner` | 60/60 | 46–52 | [`b01d514`](https://github.com/ma3u/hacknight/commit/b01d514) |
-| 3 · Bestes Modell | 8 Modelle gemessen; gpt-5.4-mini ist am genauesten und unter den genauen am schnellsten | 200/200 Trivia, 59/60 eigene | 69 | [`b01d514`](https://github.com/ma3u/hacknight/commit/b01d514) |
-| 4 · Websuche | `ConditionalRouter` schickt aktuelle Fragen an einen Agent mit OpenAI-Websuche | **14/14 aktuell** (vorher 4/14), 174/174 gesamt | ~75 zeitlos, ~9.000 mit Suche | [`457c944`](https://github.com/ma3u/hacknight/commit/457c944) |
+| 0 · Starter | gpt-5.1 with the tools `calculate` and `count_letter`, long prompt | 39/40 | 460 | [`856ec43`](https://github.com/ma3u/hacknight/commit/856ec43) |
+| 1 · Send less | gpt-5.4, no tools, `reasoning_effort: low`, seven-word prompt | 60/60 | 66–82 | [`aaa8ee8`](https://github.com/ma3u/hacknight/commit/aaa8ee8) |
+| 2 · Python instead of an LLM | `QuickAnswer` component solves arithmetic and letter counts with 0 tokens; pipeline with `BranchJoiner` | 60/60 | 46–52 | [`b01d514`](https://github.com/ma3u/hacknight/commit/b01d514) |
+| 3 · Best model | 8 models measured; gpt-5.4-mini is the most accurate and the fastest of the accurate ones | 200/200 trivia, 59/60 own | 69 | [`b01d514`](https://github.com/ma3u/hacknight/commit/b01d514) |
+| 4 · Web search | `ConditionalRouter` sends recent questions to an agent with OpenAI web search | **14/14 recent** (was 4/14), 174/174 overall | ~75 timeless, ~9,000 with search | [`457c944`](https://github.com/ma3u/hacknight/commit/457c944) |
 
-**Ergebnis:** 99,6 % über alle Testsets, ~3,6 s bei normalen Fragen und ~7 s mit Websuche, gegenüber dem
-Starter-Agent etwa 90 % weniger Tokens pro normaler Frage.
+**Result:** 99.6 % across all test sets, ~3.6 s for normal questions and ~7 s with web search, and about 90 % fewer
+tokens per normal question than the starter agent.
 
-## Was wir gelernt haben
+## What we learned
 
-1. **Tokens zählen, nicht Modellpreise.** Das Leaderboard wertete Tokens modellunabhängig. Tool-Beschreibungen und
-   lange Prompts werden bei jeder Frage bezahlt; jeder Tool-Aufruf ist ein zweiter LLM-Aufruf.
-2. **Denken nur, wo es nötig ist.** `reasoning_effort: low` kostet bei Wissensfragen genauso viele Tokens wie `none`,
-   rechnet Textaufgaben aber richtig.
-3. **Was Python kann, braucht kein LLM.** Der Solver antwortet nur, wenn genau eine Option passt; sonst übernimmt das
-   Modell.
-4. **Faire Messung braucht gleiche Bedingungen.** Acht Agents parallel in der Sandbox maßen vor allem die
-   Warteschlange (6–14 s statt 2–4 s); ein Lauf nach dem anderen trennt die Modelle.
-5. **Das Format ist Teil der Genauigkeit.** Der Luna-Fork verlor ohne Systemprompt 999 von 1.000 Fragen
-   („D) Inception“ statt „D“), obwohl er 962 wusste. Astra antwortete mit niedrigem Reasoning „I don't know.“ —
-   „If unsure, guess.“ im Prompt behebt beides.
-6. **Wissen, das nicht im Modell steckt, muss gesucht werden.** Die Gewinner nutzten das größte Modell (Astra) und
-   Websuche. Gemessen: Astra kennt 7 von 14 aktuellen Ereignissen, mit Websuche schaffen beide Modelle 14/14.
-7. **Suche nur, wenn sie nötig ist.** Suchergebnisse kosten ~9.000 Tokens. Ein Router entscheidet vorab anhand der
-   Fragezeile (2025/2026, latest, current, kleingeschriebenes „new“), sodass normale Fragen schlank bleiben.
-8. **Erst nachsehen, dann glauben.** Die erste Messung „mit Websuche“ sah nach wenig Nutzen aus; tatsächlich lieferte
-   die Serper-Suche HTTP 403, weil `SERPERDEV_API_KEY` nur als Org-Secret existiert. Erst der Blick in die
-   Nachrichten des Agents zeigte das. OpenAIs gehostete Websuche läuft mit dem vorhandenen OpenAI-Key.
+1. **Count tokens, not model prices.** The leaderboard counted tokens regardless of model. Tool descriptions and long
+   prompts are paid on every question; every tool call is a second LLM call.
+2. **Think only where it's needed.** `reasoning_effort: low` costs exactly as many tokens as `none` on knowledge
+   questions, but gets word problems right.
+3. **What Python can do needs no LLM.** The solver only answers when exactly one option matches; otherwise the model
+   takes over.
+4. **Fair measurement needs equal conditions.** Eight agents in parallel in the sandbox mostly measured the queue
+   (6–14 s instead of 2–4 s); one run at a time separates the models.
+5. **Format is part of accuracy.** Without a system prompt the Luna fork lost 999 of 1,000 questions
+   ("D) Inception" instead of "D") although it knew 962 of them. Astra answered "I don't know." on low reasoning —
+   "If unsure, guess." in the prompt fixes both.
+6. **Knowledge that isn't in the model has to be searched.** The winners used the biggest model (Astra) and web search.
+   Measured: Astra knows 7 of 14 recent events; with web search both models get 14/14.
+7. **Search only when it's needed.** Search results cost ~9,000 tokens. A router decides up front from the question line
+   (2025/2026, latest, current, lowercase "new"), so normal questions stay lean.
+8. **Look before you believe.** The first measurement "with web search" suggested little benefit; in fact the Serper
+   search returned HTTP 403 because `SERPERDEV_API_KEY` exists only as an org secret. Only the agent's messages showed
+   that. OpenAI's hosted web search runs on the existing OpenAI key.
 
-## Plattform-Erkenntnisse (Haystack Enterprise)
+## Platform findings (Haystack Enterprise)
 
-- **Secrets:** Die Sandbox (`haystack-enterprise run`) und Deploys sehen Integrationen (OpenAI) und Workspace-Secrets,
-  aber keine reinen Org-Secrets. Ein Deploy mit fehlendem Secret wird bei der Validierung abgelehnt.
-- **Code-Komponenten:** Eigene `@component`-Klassen werden als Code-Komponente deployt; Init-Parameter kommen
-  serialisiert an (ein `Secret` als Dictionary).
-- **Zwei Agents in einer Pipeline:** Die Plattform streamt nur einen. Die Chat-Completions-Option `stream_options`
-  scheitert dann beim anderen; die Responses API meldet Tokens in beiden Fällen.
-- **Tools und Reasoning:** OpenAI erlaubt Funktions-Tools zusammen mit `reasoning_effort` nur über die Responses API.
-- **Kaltstart:** Serverless-Services gehen in Standby; die erste Frage nach einer Pause brauchte 10–18 s (Limit 15 s).
-  Vor dem Quiz aufwärmen.
+- **Secrets:** the sandbox (`haystack-enterprise run`) and deploys see integrations (OpenAI) and workspace secrets, but
+  not plain org secrets. A deploy with a missing secret is rejected during validation.
+- **Code components:** custom `@component` classes are deployed as code components; init parameters arrive serialized
+  (a `Secret` as a dictionary).
+- **Two agents in one pipeline:** the platform streams only one of them. The Chat Completions option `stream_options`
+  then fails for the other; the Responses API reports tokens either way.
+- **Tools and reasoning:** OpenAI only allows function tools together with `reasoning_effort` on the Responses API.
+- **Cold start:** serverless services go to standby; the first question after a pause took 10–18 s (limit 15 s).
+  Warm up before the quiz.
 
-## Rund um den Agent
+## Around the agent
 
-| Baustein | Inhalt |
+| Building block | Contents |
 |---|---|
-| Evals | 60 eigene Fragen, 1.000 Fragen aus The Trivia API ([Tabelle](../evals/trivia/QUESTIONS.md)), 14 belegte Fragen zu aktuellen Ereignissen |
-| Luna-Fix | [`agent_luna.py`](../agent_luna.py): gleiche Pipeline mit gpt-5.6-luna, Service `quiz-luna`; von 1/1000 auf 993/1000 |
-| Frontend | Vinland Pub Quiz: ein Mensch gegen 10 KI-Agenten, historische Wikinger-Figuren, Rekordleiste, ElevenLabs-Sound |
-| Online | [ma3u.github.io/hacknight](https://ma3u.github.io/hacknight/): Replay mit den echten Eval-Antworten, per GitHub Actions deployt |
-| Video | [`video/record_video.py`](../video/record_video.py): Chrome-Aufnahme per DevTools-Screencast, Opus 5.5 spielt den Menschen, LinkedIn (4:5) und Desktop (16:9) |
-| LinkedIn | Der veröffentlichte Post: [`LINKEDIN.md`](LINKEDIN.md) |
+| Evals | 60 own questions, 1,000 questions from The Trivia API ([table](../evals/trivia/QUESTIONS.md)), 14 sourced recent-events questions |
+| Luna fix | [`agent_luna.py`](../agent_luna.py): same pipeline with gpt-5.6-luna, service `quiz-luna`; from 1/1000 to 993/1000 |
+| Frontend | Vinland Pub Quiz: one human vs. ten AI agents, historical Viking characters, records bar, ElevenLabs sound |
+| Online | [ma3u.github.io/hacknight](https://ma3u.github.io/hacknight/): replay with the real eval answers, deployed by GitHub Actions |
+| Video | [`video/record_video.py`](../video/record_video.py): Chrome recording via the DevTools screencast, Opus 5.5 plays the human, LinkedIn (4:5) and desktop (16:9) |
+| LinkedIn | The published post: [`LINKEDIN.md`](LINKEDIN.md) |

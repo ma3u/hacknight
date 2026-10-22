@@ -19,16 +19,16 @@ RESULTS = HERE.parent / "evals" / "results"
 REPLAY = HERE / "replay.json"
 # frontend agent key -> (eval result prefix, model label, note)
 MODELS = {
-    "quiz-web": ("p2_web", "gpt-5.4-mini + Websuche", "Service quiz: Solver, Router, OpenAI-Websuche"),
-    "gpt-6-astra": ("w_astra", "gpt-6-astra", "neuestes Modell, Standard-Reasoning"),
+    "quiz-web": ("p2_web", "gpt-5.4-mini + web search", "service quiz: solver, router, OpenAI web search"),
+    "gpt-6-astra": ("w_astra", "gpt-6-astra", "newest model, default reasoning"),
     "gpt-5.6-luna": ("p8_gpt-5.6-luna", "gpt-5.6-luna", "reasoning low"),
     "gpt-5.4": ("p8_gpt-5.4", "gpt-5.4", "reasoning low"),
-    "gpt-5.4-mini": ("p8_gpt-5.4-mini", "gpt-5.4-mini", "reasoning low, ohne Websuche"),
+    "gpt-5.4-mini": ("p8_gpt-5.4-mini", "gpt-5.4-mini", "reasoning low, no web search"),
     "gpt-5.4-nano": ("p8_gpt-5.4-nano", "gpt-5.4-nano", "reasoning low"),
     "gpt-5.1": ("p8_gpt-5.1", "gpt-5.1", "reasoning low"),
     "gpt-5-mini": ("p8_gpt-5-mini", "gpt-5-mini", "reasoning low"),
-    "gpt-4.1": ("p8_gpt-4.1", "gpt-4.1", "1 Token, logit_bias A-D"),
-    "gpt-4o-mini": ("p8_gpt-4o-mini", "gpt-4o-mini", "1 Token, logit_bias A-D"),
+    "gpt-4.1": ("p8_gpt-4.1", "gpt-4.1", "1 token, logit_bias A-D"),
+    "gpt-4o-mini": ("p8_gpt-4o-mini", "gpt-4o-mini", "1 token, logit_bias A-D"),
 }
 RUNS = ("own", "hard", "s200", "recent")  # question sets every agent answered
 SEARCHES = {"quiz-web"}  # agents that search the web for recent questions (own and recent sets run back to back)
@@ -68,7 +68,7 @@ def build_replay() -> None:
 def build_site(out: Path) -> None:
     shutil.rmtree(out, ignore_errors=True)
     (out / "sounds").mkdir(parents=True)
-    html = (HERE / "index.html").read_text().replace('<html lang="de">', '<html lang="de" data-static="1">', 1)
+    html = (HERE / "index.html").read_text().replace('<html lang="en">', '<html lang="en" data-static="1">', 1)
     (out / "index.html").write_text(html)
     shutil.copy(REPLAY, out / "replay.json")
     sounds = sorted(p.stem for p in (HERE / "sounds").glob("*.mp3"))

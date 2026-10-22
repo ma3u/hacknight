@@ -2,65 +2,65 @@
 !theme plain
 skinparam componentStyle rectangle
 skinparam shadowing false
-title Team Vinland · Systemarchitektur
+title Team Vinland · System architecture
 
-actor "Quiz-Host\n(Agent Quiz, localhost:3000)" as Host
-actor "Team Vinland\n(Browser)" as Team
+actor "Quiz host\n(Agent Quiz, localhost:3000)" as Host
+actor "Team Vinland\n(browser)" as Team
 
-package "Laptop · Repo ma3u/hacknight" {
+package "Laptop · repo ma3u/hacknight" {
   [agent.py\nbuild_pipeline(model)] as AgentPy
   [agent_luna.py] as LunaPy
   [quick_answer.py\n@component QuickAnswer] as QA
   [evals/run_eval.py\n+ questions*.json] as Evals
-  [frontend/server.py\n(Proxy, stdlib)] as Server
-  [frontend/index.html\nDuell-UI + Sounds] as UI
+  [frontend/server.py\n(proxy, stdlib)] as Server
+  [frontend/index.html\nquiz UI + sounds] as UI
   [frontend/make_sounds.py\n+ eleven.py] as Sounds
   [haystack-enterprise CLI] as CLI
 }
 
 cloud "Haystack Enterprise Platform" {
   node "Gateway" {
-    [Service quiz\ngpt-5.4-mini + Websuche] as SvcQuiz
-    [Service quiz-luna\ngpt-5.6-luna + Websuche] as SvcLuna
+    [Service quiz\ngpt-5.4-mini + web search] as SvcQuiz
+    [Service quiz-luna\ngpt-5.6-luna + web search] as SvcLuna
   }
-  node "Pipeline (beide Services)" {
-    [QuickAnswer\n(Code-Komponente)] as PQA
-    [ConditionalRouter\n(aktuell?)] as PRouter
+  node "Pipeline (both services)" {
+    [QuickAnswer\n(code component)] as PQA
+    [ConditionalRouter\n(recent?)] as PRouter
     [Agent\nResponses API] as PAgent
-    [Web-Agent\nResponses API + web_search] as PWeb
+    [Web agent\nResponses API + web_search] as PWeb
     [BranchJoiner] as PJoin
   }
-  [Sandbox\n(run ohne Deploy)] as Sandbox
-  database "Org-Secrets\nOPENAI_API_KEY" as Secrets
+  [Sandbox\n(run without deploying)] as Sandbox
+  database "Org secrets\nOPENAI_API_KEY" as Secrets
 }
 
 cloud "OpenAI API" as OpenAI
 cloud "ElevenLabs API" as Eleven
 
-AgentPy ..> QA : importiert
+AgentPy ..> QA : imports
 LunaPy ..> AgentPy : build_pipeline("gpt-5.6-luna")
 CLI --> SvcQuiz : deploy agent.py quiz (gpt-5.4-mini)
 CLI --> SvcLuna : deploy agent_luna.py quiz-luna
-CLI --> Sandbox : run (check.py, evals, Frontend)
+CLI --> Sandbox : run (check.py, evals, frontend)
 Evals --> CLI
-Server --> CLI : Sandbox-Modus
-Server --> SvcQuiz : Live-Modus (DEEPSET_API_KEY)
+Server --> CLI : sandbox mode
+Server --> SvcQuiz : live mode (DEEPSET_API_KEY)
 UI --> Server : /api/questions, /api/ask
 Team --> UI
-Sounds --> Eleven : Sound-Effekte, Musik, Stimmen
-Server --> Eleven : Knut liest Fragen vor (TTS)
+Sounds --> Eleven : sound effects, music, voices
+Server --> Eleven : Cnut reads questions aloud (TTS)
 UI ..> Sounds : sounds/*.mp3
 
-Host --> SvcQuiz : Frage (OpenAI-kompatibel)
+Host --> SvcQuiz : question (OpenAI-compatible)
 SvcQuiz --> PQA
 SvcLuna --> PQA
-PQA --> PJoin : beantwortet (0 Tokens)
-PQA --> PRouter : unbeantwortet
-PRouter --> PAgent : zeitlos
+PQA --> PJoin : answered (0 tokens)
+PQA --> PRouter : unanswered
+PRouter --> PAgent : timeless
 PRouter --> PWeb : 2025/2026, latest, current, new
 PAgent --> PJoin
 PWeb --> PJoin
-PAgent --> OpenAI : 1 Aufruf, reasoning low
-PWeb --> OpenAI : 1 Aufruf + gehostete Websuche
+PAgent --> OpenAI : 1 call, reasoning low
+PWeb --> OpenAI : 1 call + hosted web search
 Secrets ..> PAgent : OPENAI_API_KEY
 @enduml

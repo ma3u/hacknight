@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -323,9 +323,9 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     </div>
     <div class="title">
       <h1>Vinland Pub Quiz</h1>
-      <p>Mensch gegen zehn KI-Agenten</p>
+      <p>One human vs. ten AI agents</p>
     </div>
-    <button class="soundbtn" id="soundBtn" aria-pressed="true">🔊 Sound an</button>
+    <button class="soundbtn" id="soundBtn" aria-pressed="true">🔊 Sound on</button>
   </header>
 
   <section class="records" id="records" aria-label="Rekorde" hidden></section>
@@ -334,47 +334,47 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     <div class="host">
       <div class="frame" data-portrait="knut"></div>
       <div>
-        <div class="name">Knut der Große · Quizmaster</div>
-        <div class="bubble left">Ein Mensch tritt gegen zehn KI-Agenten an. Wer die meisten Fragen trifft, gewinnt. Bei Gleichstand zählen Tokens, dann Zeit, wie im echten Quiz.</div>
+        <div class="name">Cnut the Great · quizmaster</div>
+        <div class="bubble left">One human takes on ten AI agents. Whoever gets the most questions right wins. Ties go to fewer tokens, then time, just like the real quiz.</div>
       </div>
     </div>
     <div class="setup">
       <div class="human-setup">
-        <span class="kind human">👤 Mensch</span>
-        <label for="humanName">Euer Name als Spieler</label>
+        <span class="kind human">👤 Human</span>
+        <label for="humanName">Your player name</label>
         <input id="humanName" maxlength="24" value="Team Vinland">
       </div>
       <div class="lineup" id="lineup"></div>
-      <div class="seg" role="group" aria-label="Anzahl Fragen">
-        <button data-n="5">5 Fragen</button><button data-n="10" aria-pressed="true">10 Fragen</button><button data-n="20">20 Fragen</button>
+      <div class="seg" role="group" aria-label="Number of questions">
+        <button data-n="5">5 questions</button><button data-n="10" aria-pressed="true">10 questions</button><button data-n="20">20 questions</button>
       </div>
-      <div><button class="btn" id="start">Segel setzen</button></div>
-      <div class="hint" id="loadHint">Fragen werden geladen…</div>
+      <div><button class="btn" id="start">Set sail</button></div>
+      <div class="hint" id="loadHint">Loading questions…</div>
     </div>
   </section>
 
   <section class="card" id="quiz" hidden>
     <div class="host">
       <div class="frame" data-portrait="knut"></div>
-      <div><div class="name">Knut der Große · Quizmaster</div><div class="bubble left" id="hostSay"></div></div>
+      <div><div class="name">Cnut the Great · quizmaster</div><div class="bubble left" id="hostSay"></div></div>
     </div>
-    <div class="meta"><span id="qNum">Frage 1/10</span><span class="rune">ᚠᚢᚦ</span><span id="qTimer">0.0 s</span></div>
+    <div class="meta"><span id="qNum">Question 1/10</span><span class="rune">ᚠᚢᚦ</span><span id="qTimer">0.0 s</span></div>
     <div class="progress"><i id="bar"></i></div>
     <h2 class="question" id="qText"></h2>
     <div class="options" id="opts"></div>
     <div class="actions">
       <span class="waiting" id="waiting"></span>
-      <button class="btn ghost" id="reveal" disabled>Auflösen</button>
-      <button class="btn" id="next" hidden>Nächste Frage</button>
+      <button class="btn ghost" id="reveal" disabled>Reveal</button>
+      <button class="btn" id="next" hidden>Next question</button>
     </div>
     <div class="arena" id="arena"></div>
-    <div class="hint">👤 Mensch: Tasten <kbd>A</kbd>–<kbd>D</kbd> · <kbd>Enter</kbd> zum Auflösen / Weiter</div>
+    <div class="hint">👤 Human: keys <kbd>A</kbd>–<kbd>D</kbd> · <kbd>Enter</kbd> to reveal / continue</div>
   </section>
 
   <section class="card" id="result" hidden>
     <div class="host">
       <div class="frame" data-portrait="knut"></div>
-      <div><div class="name">Knut der Große · Quizmaster</div><div class="bubble left shout" id="verdict"></div></div>
+      <div><div class="name">Cnut the Great · quizmaster</div><div class="bubble left shout" id="verdict"></div></div>
     </div>
     <div class="setup">
       <div class="podium" id="podium"></div>
@@ -382,7 +382,7 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
         <thead id="thead"></thead>
         <tbody id="rows"></tbody>
       </table></div>
-      <div><button class="btn" id="again">Neue Runde</button></div>
+      <div><button class="btn" id="again">New round</button></div>
     </div>
   </section>
 </main>
@@ -483,15 +483,15 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     return p.join("");
   }
   const CHARACTERS = {
-    knut:      { name: "Knut der Große", short: "Knut", hair: "#2b2118", style: "long", beard: "none", gear: "crown", cloak: "#8e1f1f", brooch: true , eye: "#3d6e8f" },
+    knut:      { name: "Cnut the Great", short: "Cnut", hair: "#2b2118", style: "long", beard: "none", gear: "crown", cloak: "#8e1f1f", brooch: true , eye: "#3d6e8f" },
     leif:      { name: "Leif Eriksson", short: "Leif", hair: "#c1532b", style: "top", beard: "full", cloak: "#5b3a22", fur: "zigzag" , eye: "#4f7a3a" },
     karlsefni: { name: "Thorfinn Karlsefni", short: "Thorfinn", hair: "#6b4226", style: "short", beard: "short", gear: "hood", gearColor: "#1f5a4a", cloak: "#2c6b57", brooch: true , eye: "#6b4a2a" },
-    thorkell:  { name: "Thorkell der Hohe", short: "Thorkell", hair: "#8a8a82", style: "bald", beard: "braided", beardColor: "#b9b7ae", gear: "helmet", cloak: "#3b2a1e", fur: "bear", scar: true , eye: "#4a5a6a" },
+    thorkell:  { name: "Thorkell the Tall", short: "Thorkell", hair: "#8a8a82", style: "bald", beard: "braided", beardColor: "#b9b7ae", gear: "helmet", cloak: "#3b2a1e", fur: "bear", scar: true , eye: "#4a5a6a" },
     freydis:   { name: "Freydís Eiríksdóttir", short: "Freydís", hair: "#e3c26a", braids: true, female: true, beard: "none", gear: "headband", gearColor: "#c4372d", cloak: "#2a4f8f", fur: "zigzag" , eye: "#2f7fbf" },
     gudrid:    { name: "Guðríður Þorbjarnardóttir", short: "Guðríður", hair: "#3a2a20", style: "long", female: true, beard: "none", gear: "scarf", gearColor: "#6d4c9f", cloak: "#4b3a7a", brooch: true , eye: "#6b4a8a" },
-    erik:      { name: "Erik der Rote", short: "Erik", hair: "#d0461f", style: "long", beard: "braided", beardColor: "#d0461f", cloak: "#7a1d1d", fur: "bear", patch: true , eye: "#7a8a3a" },
+    erik:      { name: "Erik the Red", short: "Erik", hair: "#d0461f", style: "long", beard: "braided", beardColor: "#d0461f", cloak: "#7a1d1d", fur: "bear", patch: true , eye: "#7a8a3a" },
     bjarni:    { name: "Bjarni Herjólfsson", short: "Bjarni", hair: "#1d1d22", style: "short", beard: "short", gear: "headband", gearColor: "#2f8f8a", cloak: "#21535a" , eye: "#2a5a5a" },
-    harald:    { name: "Harald Blauzahn", short: "Harald", hair: "#e9e6dc", style: "top", beard: "full", beardColor: "#e9e6dc", gear: "crown", cloak: "#1e3f8f", brooch: true, tooth: true , eye: "#3a5fbf" },
+    harald:    { name: "Harald Bluetooth", short: "Harald", hair: "#e9e6dc", style: "top", beard: "full", beardColor: "#e9e6dc", gear: "crown", cloak: "#1e3f8f", brooch: true, tooth: true , eye: "#3a5fbf" },
     snorri:    { name: "Snorri Thorfinnsson", short: "Snorri", hair: "#f0d58a", style: "short", beard: "none", gear: "headband", gearColor: "#ff9f1c", cloak: "#1f6f78", fur: "zigzag", brooch: true, eye: "#3f8f6f" },
     thorvald:  { name: "Thorvald Eriksson", short: "Thorvald", hair: "#7a4a2a", style: "long", beard: "full", beardColor: "#7a4a2a", gear: "hood", gearColor: "#5a1f2a", cloak: "#3a2f4f", eye: "#5f6f3a" },
     olaf:      { name: "Olaf Tryggvason", short: "Olaf", hair: "#e3b54a", style: "short", beard: "short", gear: "circlet", cloak: "#9b2a2a", fur: "zigzag" , eye: "#3f8fbf" },
@@ -540,13 +540,13 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     const keys = Object.keys(AGENTS);
     AI().forEach((p, i) => { if (!AGENTS[p.agent]) p.agent = keys[i % keys.length]; });  // never "undefined"
     $("loadHint").textContent = STATIC
-      ? `Online-Replay: ${pool.length} Fragen. Die KIs antworten mit ihren echten, aufgezeichneten Eval-Antworten aus Haystack Enterprise; Zeit = gemessener Median pro Modell.`
-      : `${pool.length} Fragen an Bord.`;
+      ? `Online replay: ${pool.length} questions. The AIs answer with their real, recorded eval answers from Haystack Enterprise; time = measured median per agent.`
+      : `${pool.length} questions on board.`;
     renderLineup();
-  }).catch(() => { $("loadHint").textContent = "Server nicht erreichbar: uv run python frontend/server.py"; });
+  }).catch(() => { $("loadHint").textContent = "Server not reachable: uv run python frontend/server.py"; });
 
-  const modelOf = (p) => p.human ? "Mensch" : (AGENTS[p.agent]?.model || p.agent || "?");
-  const kindBadge = (p) => p.human ? `<span class="kind human">👤 Mensch</span>` : `<span class="kind ai">🤖 KI · ${escapeHtml(modelOf(p))}</span>`;
+  const modelOf = (p) => p.human ? "Human" : (AGENTS[p.agent]?.model || p.agent || "?");
+  const kindBadge = (p) => p.human ? `<span class="kind human">👤 Human</span>` : `<span class="kind ai">🤖 AI · ${escapeHtml(modelOf(p))}</span>`;
   const playerName = (p) => p.human ? humanName : CHARACTERS[p.char].name;
 
   function renderLineup() {
@@ -554,7 +554,7 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
       <div class="fighter" style="--c:${p.color}">
         <div class="frame">${portrait(p.char)}</div>
         <div><div class="who">${CHARACTERS[p.char].name}</div>
-          <select data-player="${p.id}" aria-label="Modell für ${CHARACTERS[p.char].name}">${Object.entries(AGENTS).map(([k, a]) =>
+          <select data-player="${p.id}" aria-label="Agent for ${CHARACTERS[p.char].name}">${Object.entries(AGENTS).map(([k, a]) =>
             `<option value="${k}" ${k === p.agent ? "selected" : ""}>${escapeHtml(a.label)}${a.live ? " (live)" : ""}</option>`).join("")}</select>
           <div class="role">${escapeHtml(AGENTS[p.agent]?.note || "")}</div>
         </div>
@@ -646,7 +646,7 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
   function stopMusic() { if (music) music.pause(); if (drone) drone.stop(); }
   function renderSoundBtn() {
     $("soundBtn").setAttribute("aria-pressed", String(soundOn));
-    $("soundBtn").textContent = soundOn ? "🔊 Sound an" : "🔇 Sound aus";
+    $("soundBtn").textContent = soundOn ? "🔊 Sound on" : "🔇 Sound off";
   }
   $("soundBtn").addEventListener("click", () => {
     soundOn = !soundOn;
@@ -702,9 +702,9 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
   function renderRecords() {
     $("records").hidden = false;
     if (!history.length) {
-      $("records").innerHTML = `<div class="record"><span class="rk">🏆 Führt</span><span class="rv">noch offen</span></div>
-        <div class="record"><span class="rk">🪙 Günstigste KI</span><span class="rv">noch offen</span></div>
-        <div class="record"><span class="rk">⚡ Schnellste KI</span><span class="rv">noch offen</span></div>`;
+      $("records").innerHTML = `<div class="record"><span class="rk">🏆 Leading</span><span class="rv">not yet</span></div>
+        <div class="record"><span class="rk">🪙 Cheapest AI</span><span class="rv">not yet</span></div>
+        <div class="record"><span class="rk">⚡ Fastest AI</span><span class="rv">not yet</span></div>`;
       return;
     }
     const rows = ranking();
@@ -715,21 +715,21 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
       <div class="frame">${portrait(r.p.char, "happy")}</div>
       <div><span class="rk">${label}</span><span class="rv">${escapeHtml(modelOf(r.p))}</span>
       <span class="rs">${escapeHtml(playerName(r.p))} · ${value}</span></div></div>`;
-    $("records").innerHTML = cell("🏆 Führt", rows[0], `${rows[0].correct}/${history.length} richtig${rows[0].p.human ? "" : ` · ${rows[0].tokens} Tok`}`)
-      + cell("🪙 Günstigste KI", cheapest, `${cheapest.tokens} Tok · ${cheapest.correct} richtig`)
-      + cell("⚡ Schnellste KI", fastest, `Ø ${fastest.avg.toFixed(1)} s · ${fastest.correct} richtig`);
+    $("records").innerHTML = cell("🏆 Leading", rows[0], `${rows[0].correct}/${history.length} correct${rows[0].p.human ? "" : ` · ${rows[0].tokens} tok`}`)
+      + cell("🪙 Cheapest AI", cheapest, `${cheapest.tokens} tok · ${cheapest.correct} correct`)
+      + cell("⚡ Fastest AI", fastest, `Ø ${fastest.avg.toFixed(1)} s · ${fastest.correct} correct`);
   }
 
   function renderArena(says = {}) {
     $("arena").innerHTML = PLAYERS.map(p => {
       const st = stats(p);
-      const line = p.human ? `${st.correct} richtig`
-        : `${st.correct} richtig · ${st.tokens.toLocaleString("de-DE")} Tok · Ø ${st.avg ? st.avg.toFixed(1) + " s" : "–"}`;
+      const line = p.human ? `${st.correct} correct`
+        : `${st.correct} correct · ${st.tokens.toLocaleString("en-US")} tok · Ø ${st.avg ? st.avg.toFixed(1) + " s" : "–"}`;
       const s = says[p.id] || {};
       return `<div class="fighter ${s.win ? "win" : ""} ${p.human ? "is-human" : ""}" style="--c:${p.color}">
         <div class="frame">${portrait(p.char, s.mood || "neutral")}</div>
         <div>${kindBadge(p)}<div class="who">${escapeHtml(playerName(p))}</div>
-          ${p.human ? `<div class="role">spielt als ${CHARACTERS[p.char].name}</div>` : ""}<div class="score">${line}</div></div>
+          ${p.human ? `<div class="role">plays as ${CHARACTERS[p.char].name}</div>` : ""}<div class="score">${line}</div></div>
         <div class="say">${s.html || ""}</div></div>`;
     }).join("");
   }
@@ -738,9 +738,9 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     const q = round[idx];
     if (idx > 0) sound("drum", .6);
     current = { q, human: null, agents: {}, revealed: false, startedAt: performance.now() };
-    $("hostSay").textContent = `Frage ${idx + 1}! ` + pickOne(["Bei meiner Krone, beantwortet mir dies:", "Hört, Krieger des Wissens!", "Wer das weiß, segelt nach Vinland!", "Schärft eure Äxte… und euren Verstand!"]);
+    $("hostSay").textContent = `Question ${idx + 1}! ` + pickOne(["By my crown, answer me this:", "Hear me, warriors of wisdom!", "Whoever knows this sails to Vinland!", "Sharpen your axes… and your minds!"]);
     $("hostSay").className = "bubble left"; setHost("neutral");
-    $("qNum").textContent = `Frage ${idx + 1}/${round.length}`;
+    $("qNum").textContent = `Question ${idx + 1}/${round.length}`;
     $("bar").style.width = (idx / round.length * 100) + "%";
     $("qText").textContent = q.question;
     $("opts").innerHTML = "";
@@ -755,8 +755,8 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     $("next").hidden = true; $("reveal").disabled = true;
     clearInterval(tick);
     tick = setInterval(() => { $("qTimer").textContent = ((performance.now() - current.startedAt) / 1000).toFixed(1) + " s"; }, 100);
-    current.says = { human: { html: `<span class="bubble up">Du bist dran: A–D!</span>` } };
-    AI().forEach(p => { current.says[p.id] = { html: `<span class="bubble up"><span class="spinner"></span>überlegt…</span>` }; });
+    current.says = { human: { html: `<span class="bubble up">Your turn: A–D!</span>` } };
+    AI().forEach(p => { current.says[p.id] = { html: `<span class="bubble up"><span class="spinner"></span>thinking…</span>` }; });
     [...AI()].sort(() => Math.random() - .5).forEach(p => askAgent(current, p));  // random order: no model always first in the queue
     renderArena(current.says);
     updateWaiting();
@@ -766,7 +766,7 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
   function updateWaiting() {
     const open = AI().filter(p => !current.agents[p.id]).length;
     const total = AI().length;
-    $("waiting").textContent = open ? `${total - open}/${total} KI-Antworten da…` : `Alle ${total} KIs haben geantwortet.`;
+    $("waiting").textContent = open ? `${total - open}/${total} AI answers in…` : `All ${total} AIs have answered.`;
     $("reveal").disabled = open > 0;
   }
 
@@ -774,7 +774,7 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     if (current.revealed) return;
     current.human = letter;
     document.querySelectorAll(".opt").forEach(b => b.classList.toggle("picked", b.dataset.l === letter));
-    current.says.human = { html: `<span class="bubble up">Ich nehme ${letter}!</span>` };
+    current.says.human = { html: `<span class="bubble up">I pick ${letter}!</span>` };
     renderArena(current.says);
   }
 
@@ -788,14 +788,14 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
       const res = await fetch("/api/ask", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ agent: p.agent, question: state.q.question, options: state.q.options }) });
       const data = await res.json();
-      answer = res.ok ? data : { error: data.error || "Fehler", seconds: data.seconds };
+      answer = res.ok ? data : { error: data.error || "error", seconds: data.seconds };
     } catch (err) {
       answer = { error: String(err) };
     }
     state.agents[p.id] = answer;
     if (state !== current) return;
-    current.says[p.id] = { html: answer.error ? `<span class="bubble up">Schiff gesunken (Fehler)</span>`
-      : `<span class="bubble up">Antwort steht. ⚑</span>` };
+    current.says[p.id] = { html: answer.error ? `<span class="bubble up">Ship sunk (error)</span>`
+      : `<span class="bubble up">Answer locked. ⚑</span>` };
     renderArena(current.says);
     updateWaiting();
   }
@@ -807,7 +807,7 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     const { q } = current;
     const answers = { human: { letter: current.human, tokens: 0, seconds: 0 } };
     AI().forEach(p => {
-      const a = current.agents[p.id] || { error: "keine Antwort" };
+      const a = current.agents[p.id] || { error: "no answer" };
       answers[p.id] = { letter: a.letter || null, reply: a.reply, error: a.error, tokens: a.error ? 0 : (a.tokens || 0), seconds: a.seconds || 0 };
     });
     document.querySelectorAll(".opt").forEach(b => {
@@ -824,13 +824,13 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
       const a = answers[p.id];
       const right = a.letter === q.answer;
       let text;
-      if (a.error) text = "Schiff gesunken… (Fehler)";
-      else if (!p.human && !a.letter) text = `„${(a.reply || "").slice(0, 24)}“: mehr als ein Buchstabe, ungültig!`;
+      if (a.error) text = "Ship sunk… (error)";
+      else if (!p.human && !a.letter) text = `"${(a.reply || "").slice(0, 24)}": more than one letter, invalid!`;
       else if (!a.letter) text = "Ich habe nichts gesagt…";
-      else text = right ? pickOne(["Skål!", "Für Vinland!", "Wie ein Speer ins Ziel!", "Odin ist mit mir!"])
-        : pickOne(["Bei Odins Bart…", "Verflucht!", "Das Meer ist rau heute…", "Thor, warum?!"]);
-      const pills = p.human ? "" : (a.error ? `<span class="pill err">Fehler</span>`
-        : `${a.tokens === 0 ? `<span class="pill zero">0 Tok · Solver</span>` : `<span class="pill">${a.tokens} Tok</span>`}<span class="pill">${a.seconds.toFixed(1)} s</span><span class="pill">${a.letter || "–"}</span>`);
+      else text = right ? pickOne(["Skål!", "For Vinland!", "Straight as a spear!", "Odin is with me!"])
+        : pickOne(["By Odin's beard…", "Cursed!", "The sea is rough today…", "Thor, why?!"]);
+      const pills = p.human ? "" : (a.error ? `<span class="pill err">error</span>`
+        : `${a.tokens === 0 ? `<span class="pill zero">0 tok · solver</span>` : `<span class="pill">${a.tokens} tok</span>`}<span class="pill">${a.seconds.toFixed(1)} s</span><span class="pill">${a.letter || "–"}</span>`);
       says[p.id] = { mood: right ? "happy" : "sad", win: right, html: `<span class="bubble up ${right ? "shout" : ""}">${escapeHtml(text)}</span><br>${pills}` };
     });
     history.push({ q, answers });
@@ -842,13 +842,13 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     voice(answers.human.letter === q.answer ? "warrior_win" : "warrior_lose", 3200);
     renderArena(says);
     renderRecords();
-    $("hostSay").textContent = `Die Antwort ist ${q.answer}: ${q.options[LETTERS.indexOf(q.answer)]}! `
-      + (winners === PLAYERS.length ? `Alle ${PLAYERS.length}, beeindruckend!` : winners === 0 ? "Keiner?! Schande über euch alle!" : `${winners} von ${PLAYERS.length} lagen richtig.`);
+    $("hostSay").textContent = `The answer is ${q.answer}: ${q.options[LETTERS.indexOf(q.answer)]}! `
+      + (winners === PLAYERS.length ? `All ${PLAYERS.length}, impressive!` : winners === 0 ? "Nobody?! Shame on you all!" : `${winners} of ${PLAYERS.length} got it right.`);
     $("hostSay").className = "bubble left shout"; setHost(winners ? "happy" : "sad");
     $("reveal").disabled = true;
     $("waiting").textContent = "";
     $("next").hidden = false;
-    $("next").textContent = idx + 1 < round.length ? "Nächste Frage" : "Zum Ergebnis";
+    $("next").textContent = idx + 1 < round.length ? "Next question" : "Show results";
   }
 
   function next() {
@@ -863,8 +863,8 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     sound("victory", .9); voice("knut_victory", 1800);
     const ranked = ranking();
     const top = ranked[0];
-    $("verdict").textContent = top.p.human ? `Skål! ${humanName} besiegt die Maschinen!`
-      : `${CHARACTERS[top.p.char].name} mit ${modelOf(top.p)} erobert Vinland!`;
+    $("verdict").textContent = top.p.human ? `Skål! ${humanName} beats the machines!`
+      : `${CHARACTERS[top.p.char].name} with ${modelOf(top.p)} conquers Vinland!`;
     setHost("happy");
     if (!top.p.human) voice(CHARACTERS[top.p.char].female ? "shieldmaiden_win" : "warrior_win", 5200);
     renderRecords();
@@ -872,12 +872,12 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
       <div class="fighter ${i === 0 ? "win" : ""} ${r.p.human ? "is-human" : ""}" style="--c:${r.p.color}">
         <div class="frame">${portrait(r.p.char, i === 0 ? "happy" : "neutral")}</div>
         <div><div class="rank">#${i + 1}</div>${kindBadge(r.p)}<div class="who">${escapeHtml(playerName(r.p))}</div>
-          <div class="score">${r.correct}/${history.length} richtig${r.p.human ? "" : ` · ${r.tokens} Tok · Ø ${r.avg.toFixed(1)} s`}</div></div>
+          <div class="score">${r.correct}/${history.length} correct${r.p.human ? "" : ` · ${r.tokens} tok · Ø ${r.avg.toFixed(1)} s`}</div></div>
       </div>`).join("");
-    $("thead").innerHTML = `<tr><th>#</th><th>Frage</th><th>Lösung</th>${PLAYERS.map(p =>
+    $("thead").innerHTML = `<tr><th>#</th><th>Question</th><th>Answer</th>${PLAYERS.map(p =>
       `<th title="${escapeHtml(modelOf(p))}">${p.human ? "👤" : escapeHtml(modelOf(p))}</th>`).join("")}</tr>`;
     $("rows").innerHTML = history.map((h, i) => `<tr><td>${i + 1}</td><td>${escapeHtml(h.q.question)}</td><td>${h.q.answer}</td>
-      ${PLAYERS.map(p => { const a = h.answers[p.id]; return `<td class="${a.letter === h.q.answer ? "ok" : "bad"}" title="${a.tokens || 0} Tok">${a.letter || (a.error ? "!" : "–")}</td>`; }).join("")}</tr>`).join("");
+      ${PLAYERS.map(p => { const a = h.answers[p.id]; return `<td class="${a.letter === h.q.answer ? "ok" : "bad"}" title="${a.tokens || 0} tok">${a.letter || (a.error ? "!" : "–")}</td>`; }).join("")}</tr>`).join("");
   }
 
   function escapeHtml(s) {

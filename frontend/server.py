@@ -62,11 +62,11 @@ def variant(model: str, kwargs: dict, note: str, prompt: str = SHORT_PROMPT) -> 
 
 AGENTS = {
     "quiz-web": {
-        "label": "quiz · gpt-5.4-mini + Web", "model": "gpt-5.4-mini + Websuche",
-        "note": "deployter Service quiz: Solver, Router, OpenAI-Websuche für aktuelle Fragen",
+        "label": "quiz · gpt-5.4-mini + web", "model": "gpt-5.4-mini + web search",
+        "note": "deployed service quiz: solver, router, OpenAI web search for recent questions",
         "target": "agent.py", "env": {}, "service": QUIZ_SERVICE,
     },
-    "gpt-6-astra": variant("gpt-6-astra", {"max_completion_tokens": 2000}, "neuestes Modell, Standard-Reasoning",
+    "gpt-6-astra": variant("gpt-6-astra", {"max_completion_tokens": 2000}, "newest model, default reasoning",
                            prompt=GUESS_PROMPT),
     "gpt-5.6-luna": variant("gpt-5.6-luna", REASONING, "reasoning low"),
     "gpt-5.4": variant("gpt-5.4", REASONING, "reasoning low"),
@@ -74,9 +74,9 @@ AGENTS = {
     "gpt-5.4-nano": variant("gpt-5.4-nano", REASONING, "reasoning low"),
     "gpt-5.1": variant("gpt-5.1", REASONING, "reasoning low"),
     "gpt-5-mini": variant("gpt-5-mini", REASONING, "reasoning low"),
-    "gpt-4.1": variant("gpt-4.1", ONE_LETTER, "1 Token, logit_bias A-D"),
-    "gpt-4o-mini": variant("gpt-4o-mini", ONE_LETTER, "1 Token, logit_bias A-D"),
-    "luna-fork": variant("gpt-5.6-luna", {}, "alter Fork: ohne Prompt (kaputt)", prompt=""),
+    "gpt-4.1": variant("gpt-4.1", ONE_LETTER, "1 token, logit_bias A-D"),
+    "gpt-4o-mini": variant("gpt-4o-mini", ONE_LETTER, "1 token, logit_bias A-D"),
+    "luna-fork": variant("gpt-5.6-luna", {}, "old fork: no prompt (broken)", prompt=""),
 }
 
 

@@ -1,36 +1,36 @@
 @startuml live-question
 !theme plain
 skinparam shadowing false
-title Live-Quiz · eine Frage an den Service "quiz"
+title Live quiz · one question to the "quiz" service
 
-participant "Quiz-Host" as Host
-participant "Gateway\nService quiz" as GW
+participant "Quiz host" as Host
+participant "Gateway\nservice quiz" as GW
 participant "QuickAnswer" as QA
 participant "ConditionalRouter" as Router
-participant "Agent / Web-Agent\n(gpt-5.4-mini)" as Agent
-participant "OpenAI\n(+ Websuche)" as OAI
+participant "Agent / web agent\n(gpt-5.4-mini)" as Agent
+participant "OpenAI\n(+ web search)" as OAI
 participant "BranchJoiner" as Join
 
-Host -> GW : POST /chat/completions\n"Frage\nA) …\nB) …\nC) …\nD) …"
+Host -> GW : POST /chat/completions\n"Question\nA) …\nB) …\nC) …\nD) …"
 GW -> QA : messages
-alt berechenbar (Buchstaben zählen, Arithmetik)\nund genau eine Option passt
+alt computable (letter count, arithmetic)\nand exactly one option matches
   QA -> QA : solve() in Python
   QA -> Join : answered = [..., "B"]
-  note right of QA : 0 Tokens, Millisekunden
-else alles andere
+  note right of QA : 0 tokens, milliseconds
+else everything else
   QA -> Router : unanswered = messages
-  alt Fragezeile nennt 2025/2026, latest, current, new
-    Router -> Agent : recent → Web-Agent
+  alt question line mentions 2025/2026, latest, current, new
+    Router -> Agent : recent → web agent
     Agent -> OAI : Responses API, tools=[web_search (context low)]
-    OAI --> Agent : "B" (~9.000 Tokens, ~7 s)
-  else zeitlos
-    Router -> Agent : timeless → Agent
-    Agent -> OAI : Responses API, reasoning low, kein Tool
-    OAI --> Agent : "B" (~50 Tokens Wissen, bis ~150 Textaufgabe)
+    OAI --> Agent : "B" (~9,000 tokens, ~7 s)
+  else timeless
+    Router -> Agent : timeless → agent
+    Agent -> OAI : Responses API, reasoning low, no tool
+    OAI --> Agent : "B" (~50 tokens knowledge, up to ~150 word problem)
   end
   Agent -> Join : messages + "B"
 end
 Join --> GW : value
 GW --> Host : "B" + usage
-note over Host : Wertung: richtig → Tokens → Zeit\n(15 s Limit, Kaltstart vorher aufwärmen!)
+note over Host : Scoring: correct → tokens → time\n(15 s limit, warm up before the quiz!)
 @enduml

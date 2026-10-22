@@ -1,328 +1,329 @@
-# Team Vinland · Strategie für die Quiz Agent Challenge
+# Team Vinland · Strategy for the Quiz Agent Challenge
 
-> hacknight · Haystack Enterprise Platform · Workspace `vinland` · Fork [`ma3u/hacknight`](https://github.com/ma3u/hacknight)
+> hacknight · Haystack Enterprise Platform · workspace `vinland` · fork [`ma3u/hacknight`](https://github.com/ma3u/hacknight)
 
-## 1. Aufgabe und Wertung
+## 1. Task and scoring
 
-Der Agent bekommt eine Multiple-Choice-Frage (A–D) und muss mit **genau einem Buchstaben** antworten.
-Das Leaderboard wertet in dieser Reihenfolge:
+The agent gets a multiple-choice question (A–D) and must reply with **exactly one letter**.
+The leaderboard ranks in this order:
 
-| Rang | Kriterium | Folgerung für uns |
+| Rank | Criterion | What it means for us |
 |---|---|---|
-| 1 | meiste richtige Antworten (15 s Limit) | Genauigkeit und Format gehen vor allem anderen |
-| 2 | wenigste **Tokens** | Tokens zählen modellunabhängig: ein „billiges“ Modell spart Geld, aber keine Tokens |
-| 3 | schnellste Gesamtzeit | erst relevant, wenn 1 und 2 gleich sind |
+| 1 | most correct answers (15 s limit) | accuracy and format come before everything else |
+| 2 | fewest **tokens** | tokens count the same for every model: a "cheap" model saves money, not tokens |
+| 3 | fastest total time | only matters when 1 and 2 are tied |
 
-## 2. Strategie in sechs Sätzen
+## 2. The strategy in six sentences
 
-1. **Was nicht gesendet wird, kostet nichts:** Tool-Schemas und lange Systemprompts werden bei *jeder* Frage bezahlt. Darum: keine Tools, ein Prompt aus sieben Wörtern.
-2. **Denken nur, wo es nötig ist:** `reasoning_effort: low` kostet bei Wissensfragen exakt so viele Tokens wie `none` (gemessen: Differenz 0), denkt aber bei Rechen- und Textaufgaben kurz nach.
-3. **Was Python ausrechnen kann, braucht kein LLM:** Die Komponente `QuickAnswer` löst Buchstaben-Zählfragen und reine Arithmetik exakt, mit **0 Tokens**, und antwortet nur, wenn genau eine Option passt.
-4. **Haystack-Bordmittel statt Eigenbau:** `Pipeline`, `Agent`, `OpenAIChatGenerator`, `BranchJoiner` und ein einziger `@component`.
-5. **Was kein Modell wissen kann, wird gesucht:** Ein Router schickt nur Fragen zu aktuellen Ereignissen an einen Agent mit
-   OpenAI-Websuche; alles andere bleibt schlank (siehe 5.4).
-6. **Jede Änderung muss den Eval bestehen:** 60 eigene Fragen plus 1000 Fragen aus [The Trivia API](https://the-trivia-api.com). Eine Änderung bleibt nur, wenn die Genauigkeit nicht sinkt.
+1. **What isn't sent costs nothing:** tool schemas and long system prompts are paid on *every* question. So: no tools and a seven-word prompt.
+2. **Think only where it's needed:** `reasoning_effort: low` costs exactly as many tokens as `none` on knowledge questions (measured: difference 0), but briefly thinks on arithmetic and word problems.
+3. **What Python can compute needs no LLM:** the `QuickAnswer` component solves letter counts and plain arithmetic exactly, with **0 tokens**, and only answers when exactly one option matches.
+4. **Haystack building blocks instead of custom code:** `Pipeline`, `Agent`, `OpenAIResponsesChatGenerator`, `ConditionalRouter`, `BranchJoiner` and a single `@component`.
+5. **What no model can know gets searched:** a router sends only questions about recent events to an agent with
+   OpenAI web search; everything else stays lean (see 5.4).
+6. **Every change must pass the eval:** 60 own questions, 14 recent-events questions and 1,000 questions from [The Trivia API](https://the-trivia-api.com). A change stays only if accuracy doesn't drop.
 
-## 3. Systemarchitektur
+## 3. System architecture
 
-Die PlantUML-Quellen liegen zusätzlich in [`diagrams/`](diagrams/) (neu rendern: `plantuml -tsvg docs/diagrams/*.puml`).
+The PlantUML sources are also in [`diagrams/`](diagrams/) (re-render with `plantuml -tsvg docs/diagrams/*.puml`).
 
 ```plantuml
 @startuml architecture
 !theme plain
 skinparam componentStyle rectangle
 skinparam shadowing false
-title Team Vinland · Systemarchitektur
+title Team Vinland · System architecture
 
-actor "Quiz-Host\n(Agent Quiz, localhost:3000)" as Host
-actor "Team Vinland\n(Browser)" as Team
+actor "Quiz host\n(Agent Quiz, localhost:3000)" as Host
+actor "Team Vinland\n(browser)" as Team
 
-package "Laptop · Repo ma3u/hacknight" {
+package "Laptop · repo ma3u/hacknight" {
   [agent.py\nbuild_pipeline(model)] as AgentPy
   [agent_luna.py] as LunaPy
   [quick_answer.py\n@component QuickAnswer] as QA
   [evals/run_eval.py\n+ questions*.json] as Evals
-  [frontend/server.py\n(Proxy, stdlib)] as Server
-  [frontend/index.html\nDuell-UI + Sounds] as UI
+  [frontend/server.py\n(proxy, stdlib)] as Server
+  [frontend/index.html\nquiz UI + sounds] as UI
   [frontend/make_sounds.py\n+ eleven.py] as Sounds
   [haystack-enterprise CLI] as CLI
 }
 
 cloud "Haystack Enterprise Platform" {
   node "Gateway" {
-    [Service quiz\ngpt-5.4-mini + Websuche] as SvcQuiz
-    [Service quiz-luna\ngpt-5.6-luna + Websuche] as SvcLuna
+    [Service quiz\ngpt-5.4-mini + web search] as SvcQuiz
+    [Service quiz-luna\ngpt-5.6-luna + web search] as SvcLuna
   }
-  node "Pipeline (beide Services)" {
-    [QuickAnswer\n(Code-Komponente)] as PQA
-    [ConditionalRouter\n(aktuell?)] as PRouter
+  node "Pipeline (both services)" {
+    [QuickAnswer\n(code component)] as PQA
+    [ConditionalRouter\n(recent?)] as PRouter
     [Agent\nResponses API] as PAgent
-    [Web-Agent\nResponses API + web_search] as PWeb
+    [Web agent\nResponses API + web_search] as PWeb
     [BranchJoiner] as PJoin
   }
-  [Sandbox\n(run ohne Deploy)] as Sandbox
-  database "Org-Secrets\nOPENAI_API_KEY" as Secrets
+  [Sandbox\n(run without deploying)] as Sandbox
+  database "Org secrets\nOPENAI_API_KEY" as Secrets
 }
 
 cloud "OpenAI API" as OpenAI
 cloud "ElevenLabs API" as Eleven
 
-AgentPy ..> QA : importiert
+AgentPy ..> QA : imports
 LunaPy ..> AgentPy : build_pipeline("gpt-5.6-luna")
 CLI --> SvcQuiz : deploy agent.py quiz (gpt-5.4-mini)
 CLI --> SvcLuna : deploy agent_luna.py quiz-luna
-CLI --> Sandbox : run (check.py, evals, Frontend)
+CLI --> Sandbox : run (check.py, evals, frontend)
 Evals --> CLI
-Server --> CLI : Sandbox-Modus
-Server --> SvcQuiz : Live-Modus (DEEPSET_API_KEY)
+Server --> CLI : sandbox mode
+Server --> SvcQuiz : live mode (DEEPSET_API_KEY)
 UI --> Server : /api/questions, /api/ask
 Team --> UI
-Sounds --> Eleven : Sound-Effekte, Musik, Stimmen
-Server --> Eleven : Knut liest Fragen vor (TTS)
+Sounds --> Eleven : sound effects, music, voices
+Server --> Eleven : Cnut reads questions aloud (TTS)
 UI ..> Sounds : sounds/*.mp3
 
-Host --> SvcQuiz : Frage (OpenAI-kompatibel)
+Host --> SvcQuiz : question (OpenAI-compatible)
 SvcQuiz --> PQA
 SvcLuna --> PQA
-PQA --> PJoin : beantwortet (0 Tokens)
-PQA --> PRouter : unbeantwortet
-PRouter --> PAgent : zeitlos
+PQA --> PJoin : answered (0 tokens)
+PQA --> PRouter : unanswered
+PRouter --> PAgent : timeless
 PRouter --> PWeb : 2025/2026, latest, current, new
 PAgent --> PJoin
 PWeb --> PJoin
-PAgent --> OpenAI : 1 Aufruf, reasoning low
-PWeb --> OpenAI : 1 Aufruf + gehostete Websuche
+PAgent --> OpenAI : 1 call, reasoning low
+PWeb --> OpenAI : 1 call + hosted web search
 Secrets ..> PAgent : OPENAI_API_KEY
 @enduml
 ```
 
 ![architecture](diagrams/architecture.svg)
 
-## 4. Sequenzdiagramme
+## 4. Sequence diagrams
 
-### 4.1 Eine Quizfrage im Live-Quiz
+### 4.1 One question in the live quiz
 
 ```plantuml
 @startuml live-question
 !theme plain
 skinparam shadowing false
-title Live-Quiz · eine Frage an den Service "quiz"
+title Live quiz · one question to the "quiz" service
 
-participant "Quiz-Host" as Host
-participant "Gateway\nService quiz" as GW
+participant "Quiz host" as Host
+participant "Gateway\nservice quiz" as GW
 participant "QuickAnswer" as QA
 participant "ConditionalRouter" as Router
-participant "Agent / Web-Agent\n(gpt-5.4-mini)" as Agent
-participant "OpenAI\n(+ Websuche)" as OAI
+participant "Agent / web agent\n(gpt-5.4-mini)" as Agent
+participant "OpenAI\n(+ web search)" as OAI
 participant "BranchJoiner" as Join
 
-Host -> GW : POST /chat/completions\n"Frage\nA) …\nB) …\nC) …\nD) …"
+Host -> GW : POST /chat/completions\n"Question\nA) …\nB) …\nC) …\nD) …"
 GW -> QA : messages
-alt berechenbar (Buchstaben zählen, Arithmetik)\nund genau eine Option passt
+alt computable (letter count, arithmetic)\nand exactly one option matches
   QA -> QA : solve() in Python
   QA -> Join : answered = [..., "B"]
-  note right of QA : 0 Tokens, Millisekunden
-else alles andere
+  note right of QA : 0 tokens, milliseconds
+else everything else
   QA -> Router : unanswered = messages
-  alt Fragezeile nennt 2025/2026, latest, current, new
-    Router -> Agent : recent → Web-Agent
+  alt question line mentions 2025/2026, latest, current, new
+    Router -> Agent : recent → web agent
     Agent -> OAI : Responses API, tools=[web_search (context low)]
-    OAI --> Agent : "B" (~9.000 Tokens, ~7 s)
-  else zeitlos
-    Router -> Agent : timeless → Agent
-    Agent -> OAI : Responses API, reasoning low, kein Tool
-    OAI --> Agent : "B" (~50 Tokens Wissen, bis ~150 Textaufgabe)
+    OAI --> Agent : "B" (~9,000 tokens, ~7 s)
+  else timeless
+    Router -> Agent : timeless → agent
+    Agent -> OAI : Responses API, reasoning low, no tool
+    OAI --> Agent : "B" (~50 tokens knowledge, up to ~150 word problem)
   end
   Agent -> Join : messages + "B"
 end
 Join --> GW : value
 GW --> Host : "B" + usage
-note over Host : Wertung: richtig → Tokens → Zeit\n(15 s Limit, Kaltstart vorher aufwärmen!)
+note over Host : Scoring: correct → tokens → time\n(15 s limit, warm up before the quiz!)
 @enduml
 ```
 
 ![live-question](diagrams/live-question.svg)
 
-### 4.2 Eval-Iteration (wie jede Änderung geprüft wurde)
+### 4.2 Eval iteration (how every change was checked)
 
 ```plantuml
 @startuml eval-loop
 !theme plain
 skinparam shadowing false
-title Eval-Schleife · Änderung → Messung → Entscheidung
+title Eval loop · change → measure → decide
 
-actor Entwickler as Dev
+actor Developer as Dev
 participant "run_eval.py" as Eval
 participant "haystack-enterprise run" as CLI
-participant "Platform-Sandbox" as SB
+participant "Platform sandbox" as SB
 participant "OpenAI" as OAI
 
-Dev -> Eval : Variante (Modell, Prompt, Tools, kwargs)
-loop jede Frage (10–12 parallel)
-  Eval -> CLI : run <pipeline.py> --query "Frage + A–D"
-  CLI -> CLI : Pipeline lokal laden, serialisieren,\n@component → Code-Komponente
-  CLI -> SB : YAML + Inputs ausführen
-  SB -> OAI : Chat-Aufruf (falls nicht vom Solver gelöst)
-  OAI --> SB : Antwort + usage
-  SB --> CLI : Pipeline-Output (JSON)
+Dev -> Eval : variant (model, prompt, tools, kwargs)
+loop every question (10–12 in parallel)
+  Eval -> CLI : run <pipeline.py> --query "question + A–D"
+  CLI -> CLI : load pipeline locally, serialize,\n@component → code component
+  CLI -> SB : run YAML + inputs
+  SB -> OAI : chat call (unless the solver answered)
+  OAI --> SB : answer + usage
+  SB --> CLI : pipeline output (JSON)
   CLI --> Eval : result.json
-  Eval -> Eval : Format exakt [ABCD]? richtig? Tokens? Zeit?
+  Eval -> Eval : exactly [ABCD]? correct? tokens? time?
 end
-Eval --> Dev : x/N richtig · Tokens/Frage · Fehlerliste
-alt Genauigkeit gleich oder besser und weniger Tokens
+Eval --> Dev : x/N correct · tokens per question · list of misses
+alt accuracy equal or better and fewer tokens
   Dev -> CLI : deploy agent.py quiz
 else
-  Dev -> Dev : verwerfen, nächste Hypothese
+  Dev -> Dev : discard, next hypothesis
 end
 @enduml
 ```
 
 ![eval-loop](diagrams/eval-loop.svg)
 
-### 4.3 Agenten-Duell im Frontend
+### 4.3 Agent duel in the frontend
 
 ```plantuml
 @startuml frontend-duel
 !theme plain
 skinparam shadowing false
-title Vinland Pub Quiz · Mensch gegen 8 KI-Modelle
+title Vinland Pub Quiz · one human vs. ten AI agents
 
 actor "Team Vinland" as Team
-participant "index.html\n(Knut + 9 Spieler)" as UI
+participant "index.html\n(Cnut + 11 players)" as UI
 participant "server.py" as Srv
-participant "8 KI-Spieler\n(je ein Modell)" as A1
+participant "10 AI players\n(one agent each)" as A1
 
-Team -> UI : „Segel setzen“
-UI -> UI : Musik + Kriegshorn
+Team -> UI : "Set sail"
+UI -> UI : music + war horn
 UI -> Srv : GET /api/questions
-Srv --> UI : 1060 Fragen + 8 Modelle
-loop jede Frage
-  UI -> UI : Trommel, Knut stellt die Frage
-  par 8 KI-Spieler gleichzeitig
-    UI -> Srv : 8× POST /api/ask {agent: <Modell>}
-    Srv -> A1 : Sandbox-Run oder Live-Service
-    A1 --> Srv : "D", Tokens, Sekunden
+Srv --> UI : 1,074 questions + 10 agents
+loop every question
+  UI -> UI : drum, Cnut asks the question
+  par 10 AI players
+    UI -> Srv : 10× POST /api/ask {agent: <key>}
+    Srv -> A1 : sandbox run (one at a time) or live service
+    A1 --> Srv : "D", tokens, seconds
     Srv --> UI : letter, tokens, seconds
-  else Mensch
-    Team -> UI : Taste A–D (👤 Mensch)
+  else human
+    Team -> UI : key A–D (👤 human)
   end
-  Team -> UI : Auflösen
-  UI -> UI : Schwertklang, Markierung der Optionen,\nSprechblasen, Jubel oder Stöhnen
+  Team -> UI : reveal
+  UI -> UI : sword ring, marked options,\nspeech bubbles, cheers or groans
 end
-UI -> UI : Rekordleiste (führt / günstigste / schnellste KI),\nPodium nach Leaderboard-Regeln + Siegesfest
+UI -> UI : records bar (leading / cheapest / fastest AI),\npodium by leaderboard rules + victory feast
 @enduml
 ```
 
 ![frontend-duel](diagrams/frontend-duel.svg)
 
-## 5. Eval-Ergebnisse
+## 5. Eval results
 
-### 5.1 Iterationen auf 60 eigenen Fragen (40 normal + 20 schwer)
+### 5.1 Iterations on 60 own questions (40 normal + 20 hard)
 
-| # | Variante | Richtig | Tokens/Frage | Erkenntnis |
+| # | Variant | Correct | Tokens/question | Finding |
 |---|---|---|---|---|
-| 0 | Starter: gpt-5.1 + `calculate` + `count_letter` | 39/40 | 460 | Tool-Schemas bei jeder Frage, Tool-Aufruf = zweiter LLM-Call |
-| 1 | gpt-4.1, kein Prompt, `logit_bias` A–D, 1 Token | 28/40 | 38 | ohne Anweisung tippt das Modell meist „A“ |
-| 2 | gpt-5.1 ohne Tools, Kurzprompt | 34/40 | 58 | Arithmetik scheitert ohne Nachdenken |
-| 2 | `max_completion_tokens: 1` bei gpt-5.x | 0/40 | – | HTTP 400, die Obergrenze ist ohnehin nur ein Deckel |
-| 3 | **gpt-5.4, `reasoning_effort: low`, keine Tools** | **40/40** | **66** | Denken ersetzt Tools, Tokens nur wo nötig |
-| 3 | gpt-5.4 nur mit `calculate` | 37/40 | 274 | Tool kostet und lieferte teils leere Antworten |
-| 4 | Prompt „Letter only.“ | 39/40 | 68 | antwortete einmal „C) Carbon dioxide“ → zurück zum 7-Wort-Prompt |
-| 5 | **Pipeline: QuickAnswer → Agent → BranchJoiner** | **60/60** | **46 / 52** | 17 von 60 Fragen mit 0 Tokens, −33 % gegenüber Iteration 3 |
+| 0 | Starter: gpt-5.1 + `calculate` + `count_letter` | 39/40 | 460 | tool schemas on every question, a tool call is a second LLM call |
+| 1 | gpt-4.1, no prompt, `logit_bias` A–D, 1 token | 28/40 | 38 | without instructions the model mostly picks "A" |
+| 2 | gpt-5.1 without tools, short prompt | 34/40 | 58 | arithmetic fails without thinking |
+| 2 | `max_completion_tokens: 1` on gpt-5.x | 0/40 | – | HTTP 400; the cap is only a ceiling anyway |
+| 3 | **gpt-5.4, `reasoning_effort: low`, no tools** | **40/40** | **66** | thinking replaces tools, tokens only where needed |
+| 3 | gpt-5.4 with `calculate` only | 37/40 | 274 | the tool costs tokens and sometimes produced empty replies |
+| 4 | Prompt "Letter only." | 39/40 | 68 | once answered "C) Carbon dioxide" → back to the seven-word prompt |
+| 5 | **Pipeline: QuickAnswer → Agent → BranchJoiner** | **60/60** | **46 / 52** | 17 of 60 questions with 0 tokens, −33 % vs. iteration 3 |
 
-### 5.2 1000 Fragen aus The Trivia API (47 % schwer, 10 Kategorien)
+### 5.2 1,000 questions from The Trivia API (47 % hard, 10 categories)
 
-| Agent | Richtig | Tokens/Frage | Anmerkung |
+| Agent | Correct | Tokens/question | Note |
 |---|---|---|---|
-| **quiz** (gpt-5.4, Pipeline) | **993/1000** | 76 | 0 Formatfehler; 1 Fehler war ein Plattform-Aussetzer (502), 1 „Fehler“ ist ein Fehler im Datensatz (Dromedar: 0 statt 1 Höcker) |
-| Luna-Fork (wie auf der Plattform angelegt) | 1/1000 | 68 | 999 Formatfehler wie „D) Inception“; der Buchstabe am Anfang stimmte 962-mal: Wissen da, Format kaputt |
-| **Luna repariert** (`agent_luna.py`) | **993/1000** | **61** | 0 Formatfehler; gleiche Pipeline, nur Modell getauscht: **−19 % Tokens bei gleicher Genauigkeit** |
+| **quiz** (gpt-5.4, pipeline) | **993/1000** | 76 | 0 format errors; 1 miss was a platform hiccup (502), 1 "miss" is a dataset error (dromedary: 0 instead of 1 hump) |
+| Luna fork (as created on the platform) | 1/1000 | 68 | 999 format errors like "D) Inception"; the first letter was right 962 times: the knowledge was there, the format was broken |
+| **Luna fixed** (`agent_luna.py`) | **993/1000** | **61** | 0 format errors; same pipeline, only the model swapped: **−19 % tokens at the same accuracy** |
 
-Je drei Fragen konnte nur gpt-5.4 bzw. nur Luna richtig beantworten; die übrigen Fehler teilen sich beide Modelle und
-betreffen überwiegend fragwürdige Lösungen im Datensatz (Dromedar-Höcker, Erfindungsjahr der CD). **Bei Gleichstand der
-richtigen Antworten gewinnt nach den Regeln Luna, weil es 19 % weniger Tokens braucht.**
+Only gpt-5.4 got three questions right and only Luna got three others; the remaining misses are shared and mostly
+questionable answer keys in the dataset (dromedary humps, the year the CD was invented). **With equal correct answers,
+Luna wins under the rules because it uses 19 % fewer tokens.**
 
-### 5.3 Acht Modelle, gleiche Pipeline, gleiche Fragen
+### 5.3 Eight models, same pipeline, same questions
 
-Die vollständige Tabelle mit Genauigkeit und isolierter Geschwindigkeit pro Agent: [`evals/RESULTS.md`](../evals/RESULTS.md)
-(neu erzeugen: `uv run python evals/summarize.py`). Isoliert gemessen ist gpt-5.4-mini mit 3,0 s auch das schnellste der genauesten Modelle.
+The full table with accuracy and isolated speed per agent: [`evals/RESULTS.md`](../evals/RESULTS.md)
+(regenerate with `uv run python evals/summarize.py`). Measured in isolation, gpt-5.4-mini is also the fastest of the most accurate models at 3.0 s.
 
-Alle Modelle laufen in derselben Pipeline (Solver + Agent), jeweils mit ihrer besten Einstellung: Reasoning-Modelle mit
-`reasoning_effort: low`, gpt-4.1/gpt-4o-mini mit 1 Token und `logit_bias` auf A–D (sonst antworten sie „C) 87.5%“).
+All models run in the same pipeline (solver + agent), each with its best settings: reasoning models with
+`reasoning_effort: low`, gpt-4.1/gpt-4o-mini with 1 token and `logit_bias` on A–D (otherwise they reply "C) 87.5%").
 
-| Modell | Trivia 200 (hohe Last) | Eigene 60 (geringe Last) | Median-Zeit (geringe Last) | Tokens/Frage (eigene 60) |
+| Model | Trivia 200 (high load) | Own 60 (low load) | Median time (low load) | Tokens/question (own 60) |
 |---|---|---|---|---|
-| **gpt-5.4-mini** | **200** | **59** | **10,4 s** | 49 |
-| gpt-5.4 | 199 | 59 | 10,7 s | 49 |
-| gpt-5.1 | 200 | 59 | 10,8 s | 48 |
-| gpt-5-mini | 199 | 59 | 11,4 s | 50 |
-| gpt-4.1 | 199 | 57 | 10,0 s | 36 |
-| gpt-5.6-luna | 197 | 57 | 11,1 s | 39 |
-| gpt-4o-mini | 195 | 55 | 10,0 s | 36 |
-| gpt-5.4-nano | 191 | 58 | 10,8 s | 48 |
+| **gpt-5.4-mini** | **200** | **59** | **10.4 s** | 49 |
+| gpt-5.4 | 199 | 59 | 10.7 s | 49 |
+| gpt-5.1 | 200 | 59 | 10.8 s | 48 |
+| gpt-5-mini | 199 | 59 | 11.4 s | 50 |
+| gpt-4.1 | 199 | 57 | 10.0 s | 36 |
+| gpt-5.6-luna | 197 | 57 | 11.1 s | 39 |
+| gpt-4o-mini | 195 | 55 | 10.0 s | 36 |
+| gpt-5.4-nano | 191 | 58 | 10.8 s | 48 |
 
-- Die Zeiten enthalten den Sandbox-Start (~8–10 s); Unterschiede zwischen den Modellen liegen bei Zehntelsekunden.
-  Unter hoher Last (48 parallele Läufe) waren Luna und gpt-5.4 im Paarvergleich gleich schnell (Median-Differenz 0,02 s).
-- gpt-4.1 und gpt-4o-mini sind am schnellsten und günstigsten, verlieren aber bei Textaufgaben (Zug, Wechselgeld, Datumsrechnung)
-  2–5 Punkte. Bei „genau vor schnell“ scheiden sie aus; in einer 5-Fragen-Runde nur mit Wissensfragen gewinnen sie trotzdem.
-- **Entscheidung (Ziel: genau, dann schnell): `quiz` läuft seit 20:22 auf gpt-5.4-mini** — am genauesten und unter den
-  genauen Modellen am schnellsten. `quiz-luna` bleibt als reparierte Luna-Variante.
-- Live gemessen: nach frischem Deploy (Kaltstart) 10–18 s, warm unter 2 s. **Vor dem Quiz aufwärmen ist Pflicht.**
+- The times include sandbox startup (~8–10 s); the differences between models are tenths of a second.
+  Under high load (48 parallel runs), Luna and gpt-5.4 were equally fast in a paired comparison (median difference 0.02 s).
+- gpt-4.1 and gpt-4o-mini are the fastest and cheapest but lose 2–5 points on word problems (train speed, change,
+  date arithmetic). Under "accurate before fast" they drop out; in a 5-question round of pure knowledge questions they still win.
+- **Decision (goal: accurate, then fast): `quiz` has run gpt-5.4-mini since 20:22** — the most accurate model and the
+  fastest of the accurate ones. `quiz-luna` stays as the fixed Luna variant.
+- Measured live: 10–18 s after a fresh deploy (cold start), under 2 s when warm. **Warming up before the quiz is a must.**
 
-### 5.4 Nach dem Quiz: die Strategien der Gewinner
+### 5.4 After the quiz: the winners' strategies
 
-Im Live-Quiz (35+ Teams) gewann nicht die stärkste Optimierung, sondern das **neueste, größte Modell** (OpenAI Astra);
-Platz 2 und 3 nutzten **Websuche**. Viele Fragen betrafen Ereignisse, die kein Modell kennen kann (deepsets neues Büro,
-NVIDIA GTC Berlin). Beides haben wir nachgebaut und mit einem neuen Set aus 14 belegten Fragen zu Juli–Oktober 2026
-gemessen ([`evals/questions_recent.json`](../evals/questions_recent.json)).
+In the live quiz (35+ teams) the winner wasn't the most optimized pipeline but the **newest, biggest model** (OpenAI Astra);
+places 2 and 3 used **web search**. Many questions were about events no model can know (deepset's new office,
+NVIDIA GTC Berlin). We rebuilt both strategies and measured them on a new set of 14 sourced questions about
+July–October 2026 ([`evals/questions_recent.json`](../evals/questions_recent.json)).
 
-| Variante | Aktuelle 14 | Eigene 60 | Trivia 100 | Tokens/Frage (aktuell) | Zeit (aktuell) |
+| Variant | Recent 14 | Own 60 | Trivia 100 | Tokens/question (recent) | Time (recent) |
 |---|---|---|---|---|---|
-| gpt-5.4-mini (alter `quiz`) | 4/14 | 60/60 | 100/100 | 188 | 4,7 s |
-| gpt-6-astra (Standard-Reasoning) | 7/14 | 59/60 | 100/100 | 122 | 8,2 s |
-| gpt-5.4-mini + OpenAI-Websuche | **14/14** | – | – | 9.122 | 7,0 s (max 8,4) |
-| gpt-6-astra + OpenAI-Websuche | **14/14** | – | – | 8.758 | 10,9 s (max **17,9**) |
-| **neuer `quiz`: Router + Websuche nur für aktuelle Fragen** | **14/14** | **60/60** | **100/100** | 9.532 aktuell / ~50–77 sonst | 8,7 s aktuell / 3,4 s sonst |
+| gpt-5.4-mini (old `quiz`) | 4/14 | 60/60 | 100/100 | 188 | 4.7 s |
+| gpt-6-astra (default reasoning) | 7/14 | 59/60 | 100/100 | 122 | 8.2 s |
+| gpt-5.4-mini + OpenAI web search | **14/14** | – | – | 9,122 | 7.0 s (max 8.4) |
+| gpt-6-astra + OpenAI web search | **14/14** | – | – | 8,758 | 10.9 s (max **17.9**) |
+| **new `quiz`: router + web search for recent questions only** | **14/14** | **60/60** | **100/100** | 9,532 recent / ~50–77 otherwise | 8.7 s recent / 3.4 s otherwise |
 
-Was wir dabei gelernt haben:
-- **Astra** heißt in der API `gpt-6-astra`. Mit `reasoning_effort: low` antwortet es ehrlich „I don't know.“, was als falsch
-  zählt; darum steht jetzt „If unsure, guess.“ im Prompt. Astra kennt mehr Neues (7/14), ist aber langsamer und mit Suche
-  über dem 15-s-Limit. Entscheidung: gpt-5.4-mini mit Suche.
-- **Websuche über Serper scheiterte an der Plattform:** `SERPERDEV_API_KEY` ist nur ein Org-Secret; in der Sandbox ist es
-  nicht gesetzt, und ein Deploy wird abgelehnt, solange es im Workspace fehlt. Die ersten Messungen „mit Suche“ waren
-  deshalb geraten (HTTP 403 im Tool-Ergebnis) — erst der Blick in die Nachrichten des Agents hat das gezeigt.
-- **OpenAIs gehostete Websuche** (Responses API, `{"type": "web_search", "search_context_size": "low"}`) läuft auf dem
-  vorhandenen OpenAI-Key: 14/14. `context low` senkt die langsamste Antwort von 16 auf 10 s bei gleicher Genauigkeit.
-- **Suche kostet ~9.000 Tokens pro Frage.** Darum entscheidet ein `ConditionalRouter` vorab (Jahr 2025/2026, latest,
-  current, kleingeschriebenes „new“) — „New Zealand“ in einer zeitlosen Frage löst keine Suche aus.
-- **Beide Agents laufen über die Responses API:** Mit zwei Agents in einer Pipeline streamt die Plattform nur einen; die
-  Chat-Completions-Option `stream_options` lässt OpenAI ohne Streaming nicht zu, die Responses API meldet Tokens immer.
+What we learned:
+- **Astra** is `gpt-6-astra` in the API. With `reasoning_effort: low` it honestly answers "I don't know.", which counts as
+  wrong, so the prompt now says "If unsure, guess." Astra knows more recent facts (7/14) but is slower, and with search it
+  exceeds the 15 s limit. Decision: gpt-5.4-mini with search.
+- **Web search via Serper failed on the platform:** `SERPERDEV_API_KEY` is only an org secret; it isn't set in the sandbox,
+  and a deploy is rejected while it's missing in the workspace. The first measurements "with search" were therefore guesses
+  (HTTP 403 in the tool result) — only looking at the agent's messages revealed that.
+- **OpenAI's hosted web search** (Responses API, `{"type": "web_search", "search_context_size": "low"}`) runs on the
+  existing OpenAI key: 14/14. `context low` cuts the slowest answer from 16 to 10 s at the same accuracy.
+- **Search costs ~9,000 tokens per question.** So a `ConditionalRouter` decides up front (year 2025/2026, latest,
+  current, lowercase "new") — "New Zealand" in a timeless question doesn't trigger a search.
+- **Both agents use the Responses API:** with two agents in one pipeline, the platform streams only one of them; OpenAI
+  rejects the Chat Completions option `stream_options` without streaming, while the Responses API always reports tokens.
 
-## 6. Der Luna-Fix
+## 6. The Luna fix
 
-Der Fork `quiz-cf5ea67e-fork` (Service `quiz-luna`) übernahm die Pipeline, verlor aber beim Modellwechsel im Builder den
-Systemprompt und alle `generation_kwargs`. Folgen: Luna antwortete in ganzen Sätzen, und gestreamte Antworten meldeten keine Tokens.
-Der Fix ist [`agent_luna.py`](../agent_luna.py): `build_pipeline("gpt-5.6-luna")` aus [`agent.py`](../agent.py), deployt als neue
-Revision von `quiz-luna`. So bleiben beide Agenten identisch bis auf das Modell, und ein Vergleich misst wirklich nur das Modell.
+The fork `quiz-cf5ea67e-fork` (service `quiz-luna`) kept the pipeline but lost the system prompt and all
+`generation_kwargs` when the model was swapped in the builder. As a result Luna answered in full sentences, and streamed
+answers reported no tokens. The fix is [`agent_luna.py`](../agent_luna.py): `build_pipeline("gpt-5.6-luna")` from
+[`agent.py`](../agent.py), deployed as a new revision of `quiz-luna`. Both agents stay identical except for the model, so a
+comparison really measures only the model.
 
-## 7. Risiken und offene Punkte
+## 7. Risks and open points
 
-- **Sandbox-Warteschlange:** Ein Lauf allein dauert 2–4 s, drei gleichzeitig 6–14 s. Das Frontend lässt die 8 KIs deshalb nacheinander laufen (`SANDBOX_PARALLEL=1`).
-- **Websuche und Zeitlimit:** Suchfragen brauchen ~7 s (max. 10 s gemessen); bei Kaltstart plus Suche wird es knapp.
-- **Router-Lücken:** Eine aktuelle Frage ohne Jahr oder Signalwort (z. B. „Wer ist Bundeskanzler?“) wird nicht gesucht.
-- **Kaltstart:** Serverless-Services gehen in „Standby“; die erste Frage kann 6–16 s brauchen (Limit 15 s). Kurz vor dem Quiz eine Frage senden.
-- **Token-Zählung bei 0-Token-Antworten:** Wie das Leaderboard Antworten ohne LLM-Aufruf (fehlendes `usage`) wertet, ist nicht bestätigt.
-- **Datensatzfehler:** Öffentliche Trivia-Sets enthalten falsche Lösungen; 99 %+ ist nahe an der Messgrenze.
-- **Fragen vorab beschaffen** wäre Schummeln und ist nicht Teil der Strategie; der Solver rechnet nur, was sich aus der Frage selbst ergibt.
+- **Sandbox queue:** one run alone takes 2–4 s, three at once 6–14 s each. The frontend therefore runs the AI players one at a time (`SANDBOX_PARALLEL=1`).
+- **Web search and the time limit:** search questions take ~7 s (max 10 s measured); a cold start plus search gets tight.
+- **Router gaps:** a recent question without a year or signal word (e.g. "Who is the German chancellor?") isn't searched.
+- **Cold start:** serverless services go to "Standby"; the first question can take 6–16 s (limit 15 s). Send a question shortly before the quiz.
+- **Token count for 0-token answers:** how the leaderboard scores answers without an LLM call (missing `usage`) is unconfirmed.
+- **Dataset errors:** public trivia sets contain wrong answer keys; 99 %+ is close to the measurement limit.
+- **Getting the questions in advance** would be cheating and isn't part of the strategy; the solver only computes what follows from the question itself.
 
-## 8. So läuft alles
+## 8. How to run everything
 
 ```bash
 uv sync
-uv run python check.py                                   # 3 Beispielfragen in der Sandbox
-QZ_SET=trivia/questions_trivia.json QZ_TAG=_trivia uv run python evals/run_eval.py p1_pipeline
-haystack-enterprise deploy agent.py quiz                 # gpt-5.4
+uv run python check.py                                   # 3 sample questions in the sandbox
+QZ_SET=questions_recent.json QZ_TAG=_recent uv run python evals/run_eval.py p2_web
+haystack-enterprise deploy agent.py quiz                 # gpt-5.4-mini + router + web search
 haystack-enterprise deploy agent_luna.py quiz-luna --io-config agent.io.yaml
-uv run python frontend/make_sounds.py                    # ElevenLabs (CLI oder ELEVEN_LABS_API_KEY aus .env), einmalig
+uv run python frontend/make_sounds.py                    # ElevenLabs (CLI or ELEVEN_LABS_API_KEY in .env), once
 uv run python frontend/server.py                         # http://localhost:8765
 ```

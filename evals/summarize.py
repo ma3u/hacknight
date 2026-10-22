@@ -11,15 +11,15 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
 # agent -> eval result prefix
-PREFIX = {"gpt-5.4-mini + Websuche": "p2_web", "gpt-6-astra": "w_astra",
+PREFIX = {"gpt-5.4-mini + web search": "p2_web", "gpt-6-astra": "w_astra",
           **{m: f"p8_{m}" for m in ("gpt-5.4-mini", "gpt-5.6-luna", "gpt-5.4", "gpt-5.4-nano", "gpt-5.1", "gpt-5-mini",
                                     "gpt-4.1", "gpt-4o-mini")}}
 MODELS = list(PREFIX)
 FULL_1000 = {"gpt-5.4-mini": "p8_gpt-5.4-mini_trivia", "gpt-5.4": "p1_pipeline_trivia", "gpt-5.6-luna": "luna_tuned_trivia"}
-SERVICES = {"gpt-5.4-mini + Websuche": "quiz"}
-CHARACTERS = {"gpt-5.4-mini + Websuche": "Snorri Thorfinnsson", "gpt-6-astra": "Thorvald Eriksson",
-              "gpt-5.4-mini": "Thorfinn Karlsefni", "gpt-5.6-luna": "Thorkell der Hohe", "gpt-5.4": "Freydís",
-              "gpt-5.4-nano": "Guðríður", "gpt-5.1": "Erik der Rote", "gpt-5-mini": "Bjarni", "gpt-4.1": "Harald Blauzahn",
+SERVICES = {"gpt-5.4-mini + web search": "quiz"}
+CHARACTERS = {"gpt-5.4-mini + web search": "Snorri Thorfinnsson", "gpt-6-astra": "Thorvald Eriksson",
+              "gpt-5.4-mini": "Thorfinn Karlsefni", "gpt-5.6-luna": "Thorkell the Tall", "gpt-5.4": "Freydís Eiríksdóttir",
+              "gpt-5.4-nano": "Guðríður Þorbjarnardóttir", "gpt-5.1": "Erik the Red", "gpt-5-mini": "Bjarni Herjólfsson", "gpt-4.1": "Harald Bluetooth",
               "gpt-4o-mini": "Olaf Tryggvason"}
 
 
@@ -46,22 +46,22 @@ def main():
         table.append((correct, median, m, own, sample, full, speed, tokens, recent))
     table.sort(key=lambda t: (-t[0], t[1]))
 
-    lines = ["# Genauigkeit und Geschwindigkeit pro Agent", "",
-             "Alle Agents: gleiche Pipeline (QuickAnswer-Solver → Agent → BranchJoiner), gleicher Prompt, jeweils beste Einstellung",
-             "(Reasoning-Modelle `reasoning_effort: low`; gpt-4.1/gpt-4o-mini 1 Token mit `logit_bias` A–D).",
-             "Sortiert nach dem Ziel: **genau zuerst, dann schnell**.", "",
-             "| # | Agent | Figur | Service | Genauigkeit gesamt | Aktuelle Ereignisse 14 | Eigene 60 (inkl. Rechen-/Textaufgaben) | Trivia 200 | Trivia 1000 | Speed (Median, isoliert) | Tokens/Frage |",
+    lines = ["# Accuracy and speed per agent", "",
+             "All agents: same pipeline (QuickAnswer solver → agent → BranchJoiner), same prompt, each with its best settings",
+             "(reasoning models `reasoning_effort: low`; gpt-4.1/gpt-4o-mini 1 token with `logit_bias` A–D).",
+             "Sorted by the goal: **accurate first, then fast**.", "",
+             "| # | Agent | Character | Service | Overall accuracy | Recent events 14 | Own 60 (incl. arithmetic/word problems) | Trivia 200 | Trivia 1000 | Speed (median, isolated) | Tokens/question |",
              "|---|---|---|---|---|---|---|---|---|---|---|"]
     for i, (correct, median, m, own, sample, full, speed, tokens, recent) in enumerate(table, 1):
         lines.append(f"| {i} | **{m}** | {CHARACTERS[m]} | {SERVICES.get(m, '–')} | {correct:.1%} | {score(recent)} | {score(own)} | "
-                     f"{score(sample)} | {score(full)} | {median:.1f} s | {tokens:.0f} |")
-    lines += ["", "- *Genauigkeit gesamt* = aktuelle 14 + eigene 60 + Trivia 200 + Speed-Stichprobe 10 (ohne Trivia 1000, die nicht alle Modelle haben).",
-              "- *Aktuelle Ereignisse* = Fragen zu Juli–Oktober 2026 (WM, Nobelpreise, Tour, Wimbledon, GTC Berlin, GPT-6 Astra).",
-              "  Nur der Agent mit Websuche löst sie zuverlässig; er sucht nur, wenn der Router eine aktuelle Frage erkennt.",
-              "- *Speed* = Median von 10 Fragen, ein Lauf nach dem anderen in der Plattform-Sandbox (inkl. ~1 s lokaler CLI-Vorbereitung).",
-              "  Der deployte Service `quiz` antwortet warm in ~1,5 s; Fragen mit Websuche brauchen ~7 s (max. 10 s gemessen).",
-              "- *Tokens/Frage* des Web-Agents: ~75 bei zeitlosen Fragen, ~9.000 bei den 14 Suchfragen (Suchergebnisse).",
-              "- Bekannter Fehler im Trivia-Datensatz: Dromedar-Höcker als 0 statt 1 gewertet."]
+                     f"{score(sample)} | {score(full)} | {median:.1f} s | {tokens:,.0f} |")
+    lines += ["", "- *Overall accuracy* = recent 14 + own 60 + trivia 200 + speed sample 10 (without trivia 1000, which not every model ran).",
+              "- *Recent events* = questions about July–October 2026 (World Cup, Nobel Prizes, Tour, Wimbledon, GTC Berlin, GPT-6 Astra).",
+              "  Only the agent with web search answers them reliably; it searches only when the router detects a recent question.",
+              "- *Speed* = median of 10 questions, one run at a time in the platform sandbox (incl. ~1 s of local CLI preparation).",
+              "  The deployed `quiz` service answers in ~1.5 s when warm; questions with web search take ~7 s (max 10 s measured).",
+              "- *Tokens/question* of the web agent: ~75 on timeless questions, ~9,000 on the 14 search questions (search results).",
+              "- Known error in the trivia dataset: dromedary humps keyed as 0 instead of 1."]
     (HERE / "RESULTS.md").write_text("\n".join(lines) + "\n")
     print("\n".join(lines))
 

@@ -1,29 +1,29 @@
 @startuml frontend-duel
 !theme plain
 skinparam shadowing false
-title Vinland Pub Quiz · Mensch gegen 8 KI-Modelle
+title Vinland Pub Quiz · one human vs. ten AI agents
 
 actor "Team Vinland" as Team
-participant "index.html\n(Knut + 9 Spieler)" as UI
+participant "index.html\n(Cnut + 11 players)" as UI
 participant "server.py" as Srv
-participant "8 KI-Spieler\n(je ein Modell)" as A1
+participant "10 AI players\n(one agent each)" as A1
 
-Team -> UI : „Segel setzen“
-UI -> UI : Musik + Kriegshorn
+Team -> UI : "Set sail"
+UI -> UI : music + war horn
 UI -> Srv : GET /api/questions
-Srv --> UI : 1060 Fragen + 8 Modelle
-loop jede Frage
-  UI -> UI : Trommel, Knut stellt die Frage
-  par 8 KI-Spieler gleichzeitig
-    UI -> Srv : 8× POST /api/ask {agent: <Modell>}
-    Srv -> A1 : Sandbox-Run oder Live-Service
-    A1 --> Srv : "D", Tokens, Sekunden
+Srv --> UI : 1,074 questions + 10 agents
+loop every question
+  UI -> UI : drum, Cnut asks the question
+  par 10 AI players
+    UI -> Srv : 10× POST /api/ask {agent: <key>}
+    Srv -> A1 : sandbox run (one at a time) or live service
+    A1 --> Srv : "D", tokens, seconds
     Srv --> UI : letter, tokens, seconds
-  else Mensch
-    Team -> UI : Taste A–D (👤 Mensch)
+  else human
+    Team -> UI : key A–D (👤 human)
   end
-  Team -> UI : Auflösen
-  UI -> UI : Schwertklang, Markierung der Optionen,\nSprechblasen, Jubel oder Stöhnen
+  Team -> UI : reveal
+  UI -> UI : sword ring, marked options,\nspeech bubbles, cheers or groans
 end
-UI -> UI : Rekordleiste (führt / günstigste / schnellste KI),\nPodium nach Leaderboard-Regeln + Siegesfest
+UI -> UI : records bar (leading / cheapest / fastest AI),\npodium by leaderboard rules + victory feast
 @enduml

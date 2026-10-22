@@ -1,29 +1,29 @@
 @startuml eval-loop
 !theme plain
 skinparam shadowing false
-title Eval-Schleife · Änderung → Messung → Entscheidung
+title Eval loop · change → measure → decide
 
-actor Entwickler as Dev
+actor Developer as Dev
 participant "run_eval.py" as Eval
 participant "haystack-enterprise run" as CLI
-participant "Platform-Sandbox" as SB
+participant "Platform sandbox" as SB
 participant "OpenAI" as OAI
 
-Dev -> Eval : Variante (Modell, Prompt, Tools, kwargs)
-loop jede Frage (10–12 parallel)
-  Eval -> CLI : run <pipeline.py> --query "Frage + A–D"
-  CLI -> CLI : Pipeline lokal laden, serialisieren,\n@component → Code-Komponente
-  CLI -> SB : YAML + Inputs ausführen
-  SB -> OAI : Chat-Aufruf (falls nicht vom Solver gelöst)
-  OAI --> SB : Antwort + usage
-  SB --> CLI : Pipeline-Output (JSON)
+Dev -> Eval : variant (model, prompt, tools, kwargs)
+loop every question (10–12 in parallel)
+  Eval -> CLI : run <pipeline.py> --query "question + A–D"
+  CLI -> CLI : load pipeline locally, serialize,\n@component → code component
+  CLI -> SB : run YAML + inputs
+  SB -> OAI : chat call (unless the solver answered)
+  OAI --> SB : answer + usage
+  SB --> CLI : pipeline output (JSON)
   CLI --> Eval : result.json
-  Eval -> Eval : Format exakt [ABCD]? richtig? Tokens? Zeit?
+  Eval -> Eval : exactly [ABCD]? correct? tokens? time?
 end
-Eval --> Dev : x/N richtig · Tokens/Frage · Fehlerliste
-alt Genauigkeit gleich oder besser und weniger Tokens
+Eval --> Dev : x/N correct · tokens per question · list of misses
+alt accuracy equal or better and fewer tokens
   Dev -> CLI : deploy agent.py quiz
 else
-  Dev -> Dev : verwerfen, nächste Hypothese
+  Dev -> Dev : discard, next hypothesis
 end
 @enduml
