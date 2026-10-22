@@ -1,3 +1,19 @@
+> ## ⚔️ Team Vinland
+>
+> Our fork of the challenge, built at the deepset Haystack Enterprise Hack Night (NVIDIA GTC Berlin 2026).
+>
+> - **The agent** ([`agent.py`](agent.py), service `quiz`): a Python solver for computable questions (0 tokens), a
+>   `ConditionalRouter` that sends questions about recent events to an agent with OpenAI web search, and a lean
+>   gpt-5.4-mini agent for everything else. 99.6 % on all test sets, 14/14 on recent events, ~3.6 s per normal question.
+> - **Improvements, step by step:** [`docs/IMPROVEMENTS.md`](docs/IMPROVEMENTS.md) ·
+>   **Strategy & diagrams:** [`docs/STRATEGY.md`](docs/STRATEGY.md) ·
+>   **All agents compared:** [`evals/RESULTS.md`](evals/RESULTS.md) ·
+>   **1,000 quiz questions:** [`evals/trivia/QUESTIONS.md`](evals/trivia/QUESTIONS.md)
+> - **Play it:** [ma3u.github.io/hacknight](https://ma3u.github.io/hacknight/), one human vs. ten AI agents ·
+>   **Video:** [`video/SCREENPLAY.md`](video/SCREENPLAY.md) · **LinkedIn post:** [`docs/LINKEDIN.md`](docs/LINKEDIN.md)
+>
+> The original challenge description follows below.
+
 # The Quiz Agent Challenge
 
 Build the **fastest, cheapest agent that answers quiz questions correctly.** At the end we run a
