@@ -40,13 +40,12 @@ TTS_DIR = HERE / "sounds" / "tts"
 SANDBOX = threading.Semaphore(int(os.environ.get("SANDBOX_PARALLEL", "1")))
 
 SHORT_PROMPT = "Reply with only the correct option letter."
+GUESS_PROMPT = "Reply with only the correct option letter. If unsure, guess."
 REASONING = {"reasoning_effort": "low", "max_completion_tokens": 1000}
 ONE_LETTER = {"max_completion_tokens": 1, "temperature": 0, "logit_bias": {"32": 100, "33": 100, "34": 100, "35": 100}}
-# Deployed services and the model each one serves (see agent.py / agent_luna.py).
-SERVICES = {
-    "gpt-5.4-mini": ("quiz", f"{WORKSPACE}/6f4d2505-13a4-4b44-b92f-b83485e21ad7"),
-    "gpt-5.6-luna": ("quiz-luna", f"{WORKSPACE}/1b152c11-4168-4326-81b9-b8a962f60836"),
-}
+# Deployed services: quiz (agent.py) and quiz-luna (agent_luna.py), both with the recency router + web search.
+QUIZ_SERVICE = f"{WORKSPACE}/6f4d2505-13a4-4b44-b92f-b83485e21ad7"
+SERVICES = {}
 
 
 def variant(model: str, kwargs: dict, note: str, prompt: str = SHORT_PROMPT) -> dict:
@@ -62,6 +61,13 @@ def variant(model: str, kwargs: dict, note: str, prompt: str = SHORT_PROMPT) -> 
 
 
 AGENTS = {
+    "quiz-web": {
+        "label": "quiz · gpt-5.4-mini + Web", "model": "gpt-5.4-mini + Websuche",
+        "note": "deployter Service quiz: Solver, Router, OpenAI-Websuche für aktuelle Fragen",
+        "target": "agent.py", "env": {}, "service": QUIZ_SERVICE,
+    },
+    "gpt-6-astra": variant("gpt-6-astra", {"max_completion_tokens": 2000}, "neuestes Modell, Standard-Reasoning",
+                           prompt=GUESS_PROMPT),
     "gpt-5.6-luna": variant("gpt-5.6-luna", REASONING, "reasoning low"),
     "gpt-5.4": variant("gpt-5.4", REASONING, "reasoning low"),
     "gpt-5.4-mini": variant("gpt-5.4-mini", REASONING, "reasoning low"),
@@ -76,7 +82,7 @@ AGENTS = {
 
 def load_questions():
     questions = []
-    for name in ("questions.json", "questions_hard.json", "trivia/questions_trivia.json"):
+    for name in ("questions.json", "questions_hard.json", "questions_recent.json", "trivia/questions_trivia.json"):
         path = ROOT / "evals" / name
         if path.exists():
             for q, options, answer, *_ in json.loads(path.read_text()):

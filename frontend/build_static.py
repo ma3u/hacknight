@@ -1,7 +1,7 @@
 """Build the static GitHub Pages version of the Vinland pub quiz: python frontend/build_static.py [site]
 
 GitHub Pages has no backend, and the agents' credentials must never ship to a public page. So the
-online quiz is a replay: the human plays live, the eight AI models answer with their real recorded
+online quiz is a replay: the human plays live, the ten AI agents answer with their real recorded
 eval answers and tokens, timed with each model's measured isolated median.
 
 - With evals/results/ present (local), regenerates frontend/replay.json from the eval runs.
@@ -17,37 +17,46 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE.parent / "evals" / "results"
 REPLAY = HERE / "replay.json"
+# frontend agent key -> (eval result prefix, model label, note)
 MODELS = {
-    "gpt-5.4-mini": "Service quiz · reasoning low",
-    "gpt-5.6-luna": "Service quiz-luna · reasoning low",
-    "gpt-5.4": "reasoning low",
-    "gpt-5.4-nano": "reasoning low",
-    "gpt-5.1": "reasoning low",
-    "gpt-5-mini": "reasoning low",
-    "gpt-4.1": "1 Token, logit_bias A-D",
-    "gpt-4o-mini": "1 Token, logit_bias A-D",
+    "quiz-web": ("p2_web", "gpt-5.4-mini + Websuche", "Service quiz: Solver, Router, OpenAI-Websuche"),
+    "gpt-6-astra": ("w_astra", "gpt-6-astra", "neuestes Modell, Standard-Reasoning"),
+    "gpt-5.6-luna": ("p8_gpt-5.6-luna", "gpt-5.6-luna", "reasoning low"),
+    "gpt-5.4": ("p8_gpt-5.4", "gpt-5.4", "reasoning low"),
+    "gpt-5.4-mini": ("p8_gpt-5.4-mini", "gpt-5.4-mini", "reasoning low, ohne Websuche"),
+    "gpt-5.4-nano": ("p8_gpt-5.4-nano", "gpt-5.4-nano", "reasoning low"),
+    "gpt-5.1": ("p8_gpt-5.1", "gpt-5.1", "reasoning low"),
+    "gpt-5-mini": ("p8_gpt-5-mini", "gpt-5-mini", "reasoning low"),
+    "gpt-4.1": ("p8_gpt-4.1", "gpt-4.1", "1 Token, logit_bias A-D"),
+    "gpt-4o-mini": ("p8_gpt-4o-mini", "gpt-4o-mini", "1 Token, logit_bias A-D"),
 }
-RUNS = ("own", "hard", "s200")  # question sets every model answered
+RUNS = ("own", "hard", "s200", "recent")  # question sets every agent answered
+SEARCHES = {"quiz-web"}  # agents that search the web for recent questions (own and recent sets run back to back)
 
 
 def build_replay() -> None:
     agents, questions = {}, {}
-    for model, note in MODELS.items():
-        speed = json.loads((RESULTS / f"p8_{model}_speed.json").read_text())
+    for model, (prefix, label, note) in MODELS.items():
+        speed = json.loads((RESULTS / f"{prefix}_speed.json").read_text())
         median = round(statistics.median(r["secs"] for r in speed if r["reply"] is not None), 1)
-        agents[model] = {"label": model, "model": model, "note": f"{note} · Replay", "speed": median}
+        agents[model] = {"label": label, "model": label, "note": f"{note} · Replay", "speed": median}
+        seconds = {run: median for run in RUNS}
+        if model in SEARCHES:  # web search makes recent questions slower: scale by the measured slowdown
+            run_median = {run: statistics.median(r["secs"] for r in json.loads((RESULTS / f"{prefix}_{run}.json").read_text())
+                                                 if r["reply"] is not None) for run in ("own", "recent")}
+            seconds["recent"] = round(median * run_median["recent"] / run_median["own"], 1)
         for run in RUNS:
-            for r in json.loads((RESULTS / f"p8_{model}_{run}.json").read_text()):
+            for r in json.loads((RESULTS / f"{prefix}_{run}.json").read_text()):
                 q = questions.setdefault(r["q"], {"question": r["q"], "answer": r["answer"], "answers": {}, "run": run})
                 if q["run"] != run:  # same text in two sets with different option order: ambiguous, skip it
                     q["conflict"] = True
                     continue
                 reply = (r["reply"] or "").strip()
-                q["answers"][model] = [reply if reply in ("A", "B", "C", "D") else None, reply[:40], r["tokens"], median]
+                q["answers"][model] = [reply if reply in ("A", "B", "C", "D") else None, reply[:40], r["tokens"], seconds[run]]
     # options are not in the result rows: take them from the question sets
     sets = HERE.parent / "evals"
     options = {}
-    for name in ("questions.json", "questions_hard.json", "trivia/questions_trivia.json"):
+    for name in ("questions.json", "questions_hard.json", "questions_recent.json", "trivia/questions_trivia.json"):
         for row in json.loads((sets / name).read_text()):
             options.setdefault(row[0], row[1])  # own sets first: they own the shared texts
     complete = [{k2: v for k2, v in dict(q, options=options[k]).items() if k2 != "run"} for k, q in questions.items()

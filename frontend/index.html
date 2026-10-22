@@ -323,7 +323,7 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     </div>
     <div class="title">
       <h1>Vinland Pub Quiz</h1>
-      <p>Mensch gegen acht KI-Modelle</p>
+      <p>Mensch gegen zehn KI-Agenten</p>
     </div>
     <button class="soundbtn" id="soundBtn" aria-pressed="true">🔊 Sound an</button>
   </header>
@@ -335,7 +335,7 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
       <div class="frame" data-portrait="knut"></div>
       <div>
         <div class="name">Knut der Große · Quizmaster</div>
-        <div class="bubble left">Ein Mensch tritt gegen acht KI-Modelle an. Wer die meisten Fragen trifft, gewinnt. Bei Gleichstand zählen Tokens, dann Zeit, wie im echten Quiz.</div>
+        <div class="bubble left">Ein Mensch tritt gegen zehn KI-Agenten an. Wer die meisten Fragen trifft, gewinnt. Bei Gleichstand zählen Tokens, dann Zeit, wie im echten Quiz.</div>
       </div>
     </div>
     <div class="setup">
@@ -492,6 +492,8 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     erik:      { name: "Erik der Rote", short: "Erik", hair: "#d0461f", style: "long", beard: "braided", beardColor: "#d0461f", cloak: "#7a1d1d", fur: "bear", patch: true , eye: "#7a8a3a" },
     bjarni:    { name: "Bjarni Herjólfsson", short: "Bjarni", hair: "#1d1d22", style: "short", beard: "short", gear: "headband", gearColor: "#2f8f8a", cloak: "#21535a" , eye: "#2a5a5a" },
     harald:    { name: "Harald Blauzahn", short: "Harald", hair: "#e9e6dc", style: "top", beard: "full", beardColor: "#e9e6dc", gear: "crown", cloak: "#1e3f8f", brooch: true, tooth: true , eye: "#3a5fbf" },
+    snorri:    { name: "Snorri Thorfinnsson", short: "Snorri", hair: "#f0d58a", style: "short", beard: "none", gear: "headband", gearColor: "#ff9f1c", cloak: "#1f6f78", fur: "zigzag", brooch: true, eye: "#3f8f6f" },
+    thorvald:  { name: "Thorvald Eriksson", short: "Thorvald", hair: "#7a4a2a", style: "long", beard: "full", beardColor: "#7a4a2a", gear: "hood", gearColor: "#5a1f2a", cloak: "#3a2f4f", eye: "#5f6f3a" },
     olaf:      { name: "Olaf Tryggvason", short: "Olaf", hair: "#e3b54a", style: "short", beard: "short", gear: "circlet", cloak: "#9b2a2a", fur: "zigzag" , eye: "#3f8fbf" },
   };
   const portrait = (key, mood = "neutral") =>
@@ -511,6 +513,8 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
   const pickOne = (a) => a[Math.floor(Math.random() * a.length)];
   const PLAYERS = [
     { id: "human", char: "leif", color: "#e4b04a", human: true },
+    { id: "p9", char: "snorri", color: "#ff9f1c", agent: "quiz-web" },
+    { id: "p10", char: "thorvald", color: "#7cf2ff", agent: "gpt-6-astra" },
     { id: "p1", char: "karlsefni", color: "#3ef0b5", agent: "gpt-5.4-mini" },
     { id: "p2", char: "thorkell", color: "#a66bff", agent: "gpt-5.6-luna" },
     { id: "p3", char: "freydis", color: "#2bb3ff", agent: "gpt-5.4" },
@@ -761,7 +765,8 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
 
   function updateWaiting() {
     const open = AI().filter(p => !current.agents[p.id]).length;
-    $("waiting").textContent = open ? `${8 - open}/8 KI-Antworten da…` : "Alle 8 KIs haben geantwortet.";
+    const total = AI().length;
+    $("waiting").textContent = open ? `${total - open}/${total} KI-Antworten da…` : `Alle ${total} KIs haben geantwortet.`;
     $("reveal").disabled = open > 0;
   }
 
@@ -838,7 +843,7 @@ kbd { font: 600 11px Inter; padding: 2px 6px; border-radius: 4px; border: 1px so
     renderArena(says);
     renderRecords();
     $("hostSay").textContent = `Die Antwort ist ${q.answer}: ${q.options[LETTERS.indexOf(q.answer)]}! `
-      + (winners === PLAYERS.length ? "Alle neun, beeindruckend!" : winners === 0 ? "Keiner?! Schande über euch alle!" : `${winners} von ${PLAYERS.length} lagen richtig.`);
+      + (winners === PLAYERS.length ? `Alle ${PLAYERS.length}, beeindruckend!` : winners === 0 ? "Keiner?! Schande über euch alle!" : `${winners} von ${PLAYERS.length} lagen richtig.`);
     $("hostSay").className = "bubble left shout"; setHost(winners ? "happy" : "sad");
     $("reveal").disabled = true;
     $("waiting").textContent = "";

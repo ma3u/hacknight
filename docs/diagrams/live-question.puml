@@ -6,8 +6,9 @@ title Live-Quiz · eine Frage an den Service "quiz"
 participant "Quiz-Host" as Host
 participant "Gateway\nService quiz" as GW
 participant "QuickAnswer" as QA
-participant "Agent\n(gpt-5.4-mini)" as Agent
-participant "OpenAI" as OAI
+participant "ConditionalRouter" as Router
+participant "Agent / Web-Agent\n(gpt-5.4-mini)" as Agent
+participant "OpenAI\n(+ Websuche)" as OAI
 participant "BranchJoiner" as Join
 
 Host -> GW : POST /chat/completions\n"Frage\nA) …\nB) …\nC) …\nD) …"
@@ -17,9 +18,16 @@ alt berechenbar (Buchstaben zählen, Arithmetik)\nund genau eine Option passt
   QA -> Join : answered = [..., "B"]
   note right of QA : 0 Tokens, Millisekunden
 else alles andere
-  QA -> Agent : unanswered = messages
-  Agent -> OAI : system "Reply with only the correct option letter."\nreasoning_effort=low, include_usage
-  OAI --> Agent : "B" (~45 Tokens Wissen, bis ~150 Textaufgabe)
+  QA -> Router : unanswered = messages
+  alt Fragezeile nennt 2025/2026, latest, current, new
+    Router -> Agent : recent → Web-Agent
+    Agent -> OAI : Responses API, tools=[web_search (context low)]
+    OAI --> Agent : "B" (~9.000 Tokens, ~7 s)
+  else zeitlos
+    Router -> Agent : timeless → Agent
+    Agent -> OAI : Responses API, reasoning low, kein Tool
+    OAI --> Agent : "B" (~50 Tokens Wissen, bis ~150 Textaufgabe)
+  end
   Agent -> Join : messages + "B"
 end
 Join --> GW : value

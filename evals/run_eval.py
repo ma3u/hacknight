@@ -31,6 +31,7 @@ BASE_PROMPT = (
     "Reply with ONLY the letter of the correct option: A, B, C or D. No other text."
 )
 SHORT_PROMPT = "Reply with only the correct option letter."
+GUESS_PROMPT = "Reply with only the correct option letter. If unsure, guess."
 NO_REASON = {"reasoning_effort": "none", "max_completion_tokens": 50}
 
 VARIANTS = {
@@ -78,6 +79,8 @@ VARIANTS = {
                                    kwargs={"reasoning_effort": "low", "max_completion_tokens": 2000}, steps=1),
     # p1: the shipped agent.py pipeline (QuickAnswer -> Agent gpt-5.4 low -> BranchJoiner)
     "p1_pipeline": dict(target="agent.py"),
+    # p2: agent.py with the recency router and OpenAI web search for recent questions
+    "p2_web": dict(target="agent.py"),
     # luna: the gpt-5.6-luna fork from the platform, same pipeline as agent.py
     "luna_fork": dict(target="evals/pipeline_variant.py", model="gpt-5.6-luna", prompt="", kwargs={}),
     "luna_tuned": dict(target="evals/pipeline_variant.py", model="gpt-5.6-luna", prompt=SHORT_PROMPT,
@@ -90,6 +93,21 @@ VARIANTS = {
                        kwargs={"max_completion_tokens": 1, "temperature": 0,
                                "logit_bias": {"32": 100, "33": 100, "34": 100, "35": 100}})
        for m in ("gpt-4.1", "gpt-4o-mini")},
+    # w_*: the winners' strategies from the live quiz: newest model (gpt-6-astra) and web search.
+    # A Serper tool could not reach SERPERDEV_API_KEY (an org secret, not set in the workspace).
+    "w_mini": dict(target="evals/pipeline_variant.py", model="gpt-5.4-mini", prompt=GUESS_PROMPT, steps=1,
+                   kwargs={"reasoning_effort": "low", "max_completion_tokens": 1000}),
+    "w_astra": dict(target="evals/pipeline_variant.py", model="gpt-6-astra", prompt=GUESS_PROMPT, steps=1,
+                    kwargs={"max_completion_tokens": 2000}),
+    "w_mini_osearch_low": dict(target="evals/pipeline_variant.py", model="gpt-5.4-mini", prompt=GUESS_PROMPT, steps=1,
+                               api="responses", openai_tools=[{"type": "web_search", "search_context_size": "low"}],
+                               kwargs={"reasoning_effort": "low", "max_output_tokens": 2000}),
+    # OpenAI's built-in web search on the Responses API: runs on the OpenAI key, no extra secret
+    "w_mini_osearch": dict(target="evals/pipeline_variant.py", model="gpt-5.4-mini", prompt=GUESS_PROMPT, steps=1,
+                           api="responses", openai_tools=[{"type": "web_search"}],
+                           kwargs={"reasoning_effort": "low", "max_output_tokens": 2000}),
+    "w_astra_osearch": dict(target="evals/pipeline_variant.py", model="gpt-6-astra", prompt=GUESS_PROMPT, steps=1,
+                            api="responses", openai_tools=[{"type": "web_search"}], kwargs={"max_output_tokens": 3000}),
     # v5: gpt-5.1, only count_letter tool (letter counting is where LLMs slip)
     "v5_gpt51_lettertool": dict(model="gpt-5.1", prompt=SHORT_PROMPT, tools="count_letter",
                                 kwargs=NO_REASON, steps=2),
@@ -101,7 +119,8 @@ def run_one(variant: dict, q):
     extra = dict(category=q[3], difficulty=q[4]) if len(q) > 4 else {}
     env = dict(os.environ, QZ_MODEL=variant.get("model", ""), QZ_PROMPT=variant.get("prompt", ""),
                QZ_TOOLS=variant.get("tools", ""), QZ_KWARGS=json.dumps(variant.get("kwargs", {})),
-               QZ_STEPS=str(variant.get("steps", 3)))
+               QZ_STEPS=str(variant.get("steps", 3)), QZ_API=variant.get("api", ""),
+               QZ_OPENAI_TOOLS=json.dumps(variant["openai_tools"]) if "openai_tools" in variant else "")
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "r.json"
         start = time.monotonic()

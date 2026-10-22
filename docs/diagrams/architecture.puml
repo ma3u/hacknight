@@ -20,12 +20,14 @@ package "Laptop · Repo ma3u/hacknight" {
 
 cloud "Haystack Enterprise Platform" {
   node "Gateway" {
-    [Service quiz\ngpt-5.4-mini] as SvcQuiz
-    [Service quiz-luna\ngpt-5.6-luna] as SvcLuna
+    [Service quiz\ngpt-5.4-mini + Websuche] as SvcQuiz
+    [Service quiz-luna\ngpt-5.6-luna + Websuche] as SvcLuna
   }
   node "Pipeline (beide Services)" {
     [QuickAnswer\n(Code-Komponente)] as PQA
-    [Agent\nOpenAIChatGenerator] as PAgent
+    [ConditionalRouter\n(aktuell?)] as PRouter
+    [Agent\nResponses API] as PAgent
+    [Web-Agent\nResponses API + web_search] as PWeb
     [BranchJoiner] as PJoin
   }
   [Sandbox\n(run ohne Deploy)] as Sandbox
@@ -53,8 +55,12 @@ Host --> SvcQuiz : Frage (OpenAI-kompatibel)
 SvcQuiz --> PQA
 SvcLuna --> PQA
 PQA --> PJoin : beantwortet (0 Tokens)
-PQA --> PAgent : unbeantwortet
+PQA --> PRouter : unbeantwortet
+PRouter --> PAgent : zeitlos
+PRouter --> PWeb : 2025/2026, latest, current, new
 PAgent --> PJoin
+PWeb --> PJoin
 PAgent --> OpenAI : 1 Aufruf, reasoning low
+PWeb --> OpenAI : 1 Aufruf + gehostete Websuche
 Secrets ..> PAgent : OPENAI_API_KEY
 @enduml

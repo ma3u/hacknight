@@ -49,8 +49,9 @@ def last_reply(result) -> str:
 
 
 def tokens_used(result) -> int:
-    """Total tokens over every model call in the run, as the Agent sums them in `token_usage`."""
-    return (result.get("agent", {}).get("token_usage") or {}).get("total_tokens") or 0
+    """Total tokens over every model call in the run: the sum of every agent's `token_usage`."""
+    return sum((out.get("token_usage") or {}).get("total_tokens") or 0
+               for out in result.values() if isinstance(out, dict))
 
 
 def main() -> int:

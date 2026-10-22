@@ -1,0 +1,16 @@
+[
+  ["Which country won the 2026 FIFA World Cup?", ["Argentina", "France", "Spain", "Brazil"], "C"],
+  ["Who scored the winning goal in the 2026 FIFA World Cup final?", ["Lamine Yamal", "Ferran Torres", "Lionel Messi", "Mikel Oyarzabal"], "B"],
+  ["In which stadium was the 2026 FIFA World Cup final played?", ["AT&T Stadium", "SoFi Stadium", "Estadio Azteca", "MetLife Stadium"], "D"],
+  ["Who won the 2026 Nobel Prize in Literature?", ["Haruki Murakami", "Anne Carson", "Can Xue", "Gerald Murnane"], "B"],
+  ["Who was awarded the 2026 Nobel Peace Prize?", ["Navi Pillay", "Volodymyr Zelenskyy", "Yulia Navalnaya", "UNRWA"], "A"],
+  ["Who won the 2026 Tour de France?", ["Jonas Vingegaard", "Remco Evenepoel", "Primož Roglič", "Tadej Pogačar"], "D"],
+  ["In which city did the 2026 Tour de France start?", ["Florence", "Barcelona", "Copenhagen", "Bilbao"], "B"],
+  ["Who won the 2026 Wimbledon men's singles title?", ["Carlos Alcaraz", "Novak Djokovic", "Jannik Sinner", "Alexander Zverev"], "C"],
+  ["Who was the runner-up in the 2026 Wimbledon men's singles final?", ["Carlos Alcaraz", "Taylor Fritz", "Jack Draper", "Alexander Zverev"], "D"],
+  ["At which venue does the NVIDIA GTC Berlin 2026 conference take place?", ["Messe Berlin", "STATION-Berlin", "Estrel Berlin", "CityCube Berlin"], "B"],
+  ["Where did Jensen Huang give the NVIDIA GTC Berlin 2026 keynote?", ["Tempodrom", "Uber Arena", "Olympiastadion", "Velodrom"], "A"],
+  ["On which dates did NVIDIA GTC Berlin 2026 take place?", ["September 15-17, 2026", "October 6-8, 2026", "October 20-22, 2026", "November 3-5, 2026"], "C"],
+  ["Which OpenAI model was released on September 3, 2026?", ["GPT-5.5", "o5", "GPT-6 Astra", "GPT-5.6 Luna"], "C"],
+  ["During NVIDIA GTC Berlin 2026, the Haystack Enterprise Hack Night by deepset was part of which program?", ["AI Gigafactory Days", "Sovereign Cloud Summit", "Berlin AI Week", "House of Sovereignty"], "D"]
+]

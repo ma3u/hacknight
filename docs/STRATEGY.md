@@ -13,13 +13,15 @@ Das Leaderboard wertet in dieser Reihenfolge:
 | 2 | wenigste **Tokens** | Tokens zählen modellunabhängig: ein „billiges“ Modell spart Geld, aber keine Tokens |
 | 3 | schnellste Gesamtzeit | erst relevant, wenn 1 und 2 gleich sind |
 
-## 2. Strategie in fünf Sätzen
+## 2. Strategie in sechs Sätzen
 
 1. **Was nicht gesendet wird, kostet nichts:** Tool-Schemas und lange Systemprompts werden bei *jeder* Frage bezahlt. Darum: keine Tools, ein Prompt aus sieben Wörtern.
 2. **Denken nur, wo es nötig ist:** `reasoning_effort: low` kostet bei Wissensfragen exakt so viele Tokens wie `none` (gemessen: Differenz 0), denkt aber bei Rechen- und Textaufgaben kurz nach.
 3. **Was Python ausrechnen kann, braucht kein LLM:** Die Komponente `QuickAnswer` löst Buchstaben-Zählfragen und reine Arithmetik exakt, mit **0 Tokens**, und antwortet nur, wenn genau eine Option passt.
 4. **Haystack-Bordmittel statt Eigenbau:** `Pipeline`, `Agent`, `OpenAIChatGenerator`, `BranchJoiner` und ein einziger `@component`.
-5. **Jede Änderung muss den Eval bestehen:** 60 eigene Fragen plus 1000 Fragen aus [The Trivia API](https://the-trivia-api.com). Eine Änderung bleibt nur, wenn die Genauigkeit nicht sinkt.
+5. **Was kein Modell wissen kann, wird gesucht:** Ein Router schickt nur Fragen zu aktuellen Ereignissen an einen Agent mit
+   OpenAI-Websuche; alles andere bleibt schlank (siehe 5.4).
+6. **Jede Änderung muss den Eval bestehen:** 60 eigene Fragen plus 1000 Fragen aus [The Trivia API](https://the-trivia-api.com). Eine Änderung bleibt nur, wenn die Genauigkeit nicht sinkt.
 
 ## 3. Systemarchitektur
 
@@ -48,12 +50,14 @@ package "Laptop · Repo ma3u/hacknight" {
 
 cloud "Haystack Enterprise Platform" {
   node "Gateway" {
-    [Service quiz\ngpt-5.4-mini] as SvcQuiz
-    [Service quiz-luna\ngpt-5.6-luna] as SvcLuna
+    [Service quiz\ngpt-5.4-mini + Websuche] as SvcQuiz
+    [Service quiz-luna\ngpt-5.6-luna + Websuche] as SvcLuna
   }
   node "Pipeline (beide Services)" {
     [QuickAnswer\n(Code-Komponente)] as PQA
-    [Agent\nOpenAIChatGenerator] as PAgent
+    [ConditionalRouter\n(aktuell?)] as PRouter
+    [Agent\nResponses API] as PAgent
+    [Web-Agent\nResponses API + web_search] as PWeb
     [BranchJoiner] as PJoin
   }
   [Sandbox\n(run ohne Deploy)] as Sandbox
@@ -81,9 +85,13 @@ Host --> SvcQuiz : Frage (OpenAI-kompatibel)
 SvcQuiz --> PQA
 SvcLuna --> PQA
 PQA --> PJoin : beantwortet (0 Tokens)
-PQA --> PAgent : unbeantwortet
+PQA --> PRouter : unbeantwortet
+PRouter --> PAgent : zeitlos
+PRouter --> PWeb : 2025/2026, latest, current, new
 PAgent --> PJoin
+PWeb --> PJoin
 PAgent --> OpenAI : 1 Aufruf, reasoning low
+PWeb --> OpenAI : 1 Aufruf + gehostete Websuche
 Secrets ..> PAgent : OPENAI_API_KEY
 @enduml
 ```
@@ -103,8 +111,9 @@ title Live-Quiz · eine Frage an den Service "quiz"
 participant "Quiz-Host" as Host
 participant "Gateway\nService quiz" as GW
 participant "QuickAnswer" as QA
-participant "Agent\n(gpt-5.4-mini)" as Agent
-participant "OpenAI" as OAI
+participant "ConditionalRouter" as Router
+participant "Agent / Web-Agent\n(gpt-5.4-mini)" as Agent
+participant "OpenAI\n(+ Websuche)" as OAI
 participant "BranchJoiner" as Join
 
 Host -> GW : POST /chat/completions\n"Frage\nA) …\nB) …\nC) …\nD) …"
@@ -114,9 +123,16 @@ alt berechenbar (Buchstaben zählen, Arithmetik)\nund genau eine Option passt
   QA -> Join : answered = [..., "B"]
   note right of QA : 0 Tokens, Millisekunden
 else alles andere
-  QA -> Agent : unanswered = messages
-  Agent -> OAI : system "Reply with only the correct option letter."\nreasoning_effort=low, include_usage
-  OAI --> Agent : "B" (~45 Tokens Wissen, bis ~150 Textaufgabe)
+  QA -> Router : unanswered = messages
+  alt Fragezeile nennt 2025/2026, latest, current, new
+    Router -> Agent : recent → Web-Agent
+    Agent -> OAI : Responses API, tools=[web_search (context low)]
+    OAI --> Agent : "B" (~9.000 Tokens, ~7 s)
+  else zeitlos
+    Router -> Agent : timeless → Agent
+    Agent -> OAI : Responses API, reasoning low, kein Tool
+    OAI --> Agent : "B" (~50 Tokens Wissen, bis ~150 Textaufgabe)
+  end
   Agent -> Join : messages + "B"
 end
 Join --> GW : value
@@ -253,6 +269,35 @@ Alle Modelle laufen in derselben Pipeline (Solver + Agent), jeweils mit ihrer be
   genauen Modellen am schnellsten. `quiz-luna` bleibt als reparierte Luna-Variante.
 - Live gemessen: nach frischem Deploy (Kaltstart) 10–18 s, warm unter 2 s. **Vor dem Quiz aufwärmen ist Pflicht.**
 
+### 5.4 Nach dem Quiz: die Strategien der Gewinner
+
+Im Live-Quiz (35+ Teams) gewann nicht die stärkste Optimierung, sondern das **neueste, größte Modell** (OpenAI Astra);
+Platz 2 und 3 nutzten **Websuche**. Viele Fragen betrafen Ereignisse, die kein Modell kennen kann (deepsets neues Büro,
+NVIDIA GTC Berlin). Beides haben wir nachgebaut und mit einem neuen Set aus 14 belegten Fragen zu Juli–Oktober 2026
+gemessen ([`evals/questions_recent.json`](../evals/questions_recent.json)).
+
+| Variante | Aktuelle 14 | Eigene 60 | Trivia 100 | Tokens/Frage (aktuell) | Zeit (aktuell) |
+|---|---|---|---|---|---|
+| gpt-5.4-mini (alter `quiz`) | 4/14 | 60/60 | 100/100 | 188 | 4,7 s |
+| gpt-6-astra (Standard-Reasoning) | 7/14 | 59/60 | 100/100 | 122 | 8,2 s |
+| gpt-5.4-mini + OpenAI-Websuche | **14/14** | – | – | 9.122 | 7,0 s (max 8,4) |
+| gpt-6-astra + OpenAI-Websuche | **14/14** | – | – | 8.758 | 10,9 s (max **17,9**) |
+| **neuer `quiz`: Router + Websuche nur für aktuelle Fragen** | **14/14** | **60/60** | **100/100** | 9.532 aktuell / ~50–77 sonst | 8,7 s aktuell / 3,4 s sonst |
+
+Was wir dabei gelernt haben:
+- **Astra** heißt in der API `gpt-6-astra`. Mit `reasoning_effort: low` antwortet es ehrlich „I don't know.“, was als falsch
+  zählt; darum steht jetzt „If unsure, guess.“ im Prompt. Astra kennt mehr Neues (7/14), ist aber langsamer und mit Suche
+  über dem 15-s-Limit. Entscheidung: gpt-5.4-mini mit Suche.
+- **Websuche über Serper scheiterte an der Plattform:** `SERPERDEV_API_KEY` ist nur ein Org-Secret; in der Sandbox ist es
+  nicht gesetzt, und ein Deploy wird abgelehnt, solange es im Workspace fehlt. Die ersten Messungen „mit Suche“ waren
+  deshalb geraten (HTTP 403 im Tool-Ergebnis) — erst der Blick in die Nachrichten des Agents hat das gezeigt.
+- **OpenAIs gehostete Websuche** (Responses API, `{"type": "web_search", "search_context_size": "low"}`) läuft auf dem
+  vorhandenen OpenAI-Key: 14/14. `context low` senkt die langsamste Antwort von 16 auf 10 s bei gleicher Genauigkeit.
+- **Suche kostet ~9.000 Tokens pro Frage.** Darum entscheidet ein `ConditionalRouter` vorab (Jahr 2025/2026, latest,
+  current, kleingeschriebenes „new“) — „New Zealand“ in einer zeitlosen Frage löst keine Suche aus.
+- **Beide Agents laufen über die Responses API:** Mit zwei Agents in einer Pipeline streamt die Plattform nur einen; die
+  Chat-Completions-Option `stream_options` lässt OpenAI ohne Streaming nicht zu, die Responses API meldet Tokens immer.
+
 ## 6. Der Luna-Fix
 
 Der Fork `quiz-cf5ea67e-fork` (Service `quiz-luna`) übernahm die Pipeline, verlor aber beim Modellwechsel im Builder den
@@ -263,6 +308,8 @@ Revision von `quiz-luna`. So bleiben beide Agenten identisch bis auf das Modell,
 ## 7. Risiken und offene Punkte
 
 - **Sandbox-Warteschlange:** Ein Lauf allein dauert 2–4 s, drei gleichzeitig 6–14 s. Das Frontend lässt die 8 KIs deshalb nacheinander laufen (`SANDBOX_PARALLEL=1`).
+- **Websuche und Zeitlimit:** Suchfragen brauchen ~7 s (max. 10 s gemessen); bei Kaltstart plus Suche wird es knapp.
+- **Router-Lücken:** Eine aktuelle Frage ohne Jahr oder Signalwort (z. B. „Wer ist Bundeskanzler?“) wird nicht gesucht.
 - **Kaltstart:** Serverless-Services gehen in „Standby“; die erste Frage kann 6–16 s brauchen (Limit 15 s). Kurz vor dem Quiz eine Frage senden.
 - **Token-Zählung bei 0-Token-Antworten:** Wie das Leaderboard Antworten ohne LLM-Aufruf (fehlendes `usage`) wertet, ist nicht bestätigt.
 - **Datensatzfehler:** Öffentliche Trivia-Sets enthalten falsche Lösungen; 99 %+ ist nahe an der Messgrenze.
